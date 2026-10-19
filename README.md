@@ -21,3 +21,19 @@ source .venv/bin/activate  # activate the virtual environment
 python manage.py migrate  # migrate database
 python manage.py runserver
 ```
+
+## GitHub Actions
+
+The GitHub Actions CI/CD contains 3 components:
+
+1. Backend lint: run ruff lint and format checks
+2. Backend tests: run Django tests
+3. Frontend lint: run ESLint, Prettier, and npm build
+
+To run CI locally, use the command `make ci-local`; to run checks individually, use the following commands:
+
+```bash
+make lint  # lint code
+make test  # run tests
+make format-check  # check code formatting
+```
