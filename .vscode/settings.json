@@ -1,5 +1,5 @@
 {
   "python.terminal.useEnvFile": true,
-  "cSpell.words": ["corsheaders"],
+  "cSpell.words": ["corsheaders", "runserver", "venv"],
   "python-envs.defaultEnvManager": "ms-python.python:system"
 }
