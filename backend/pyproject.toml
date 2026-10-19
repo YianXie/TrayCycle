@@ -9,4 +9,5 @@ dependencies = [
     "django-cors-headers>=4.9.0",
     "django-environ>=0.14.0",
     "djangorestframework>=3.18.3",
+    "ruff>=0.17.1",
 ]
