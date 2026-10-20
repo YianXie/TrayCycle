@@ -8,7 +8,7 @@ import Home from "./pages/Home";
  *
  * Defines all application routes with components for better performance.
  */
-function App() {
+export default function App() {
     return (
         <Router>
             <Routes>
@@ -26,5 +26,3 @@ function App() {
         </Router>
     );
 }
-
-export default App;
