@@ -6,7 +6,7 @@
  * Automatically hides on scroll for better user experience.
  */
 function Header() {
-    return (<></>);
+    return <></>;
 }
 
 export default Header;

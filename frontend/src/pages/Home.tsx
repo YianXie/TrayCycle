@@ -7,12 +7,7 @@
  * Includes item comparison functionality with a bottom slider for selected items.
  */
 function Home() {
-    
-    return (
-        <>
-            
-        </>
-    );
+    return <></>;
 }
 
 export default Home;
