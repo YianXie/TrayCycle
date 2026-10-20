@@ -1,5 +1,3 @@
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
 import Layout from "./components/layout/Layout";
