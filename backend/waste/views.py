@@ -2,6 +2,7 @@ from rest_framework import viewsets
 
 from .models import (
     Capture,
+    Compartment,
     Device,
     Dish,
     Label,
@@ -9,11 +10,10 @@ from .models import (
     MenuItem,
     OverproductionLog,
     Prediction,
-    Station,
-    User,
 )
 from .serializers import (
     CaptureSerializer,
+    CompartmentSerializer,
     DeviceSerializer,
     DishSerializer,
     LabelSerializer,
@@ -21,14 +21,7 @@ from .serializers import (
     MenuItemSerializer,
     OverproductionLogSerializer,
     PredictionSerializer,
-    StationSerializer,
-    UserSerializer,
 )
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
 
 
 class DishViewSet(viewsets.ModelViewSet):
@@ -36,9 +29,9 @@ class DishViewSet(viewsets.ModelViewSet):
     serializer_class = DishSerializer
 
 
-class StationViewSet(viewsets.ModelViewSet):
-    queryset = Station.objects.all()
-    serializer_class = StationSerializer
+class CompartmentViewSet(viewsets.ModelViewSet):
+    queryset = Compartment.objects.all()
+    serializer_class = CompartmentSerializer
 
 
 class MenuDayViewSet(viewsets.ModelViewSet):

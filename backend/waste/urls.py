@@ -2,6 +2,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     CaptureViewSet,
+    CompartmentViewSet,
     DeviceViewSet,
     DishViewSet,
     LabelViewSet,
@@ -9,14 +10,11 @@ from .views import (
     MenuItemViewSet,
     OverproductionLogViewSet,
     PredictionViewSet,
-    StationViewSet,
-    UserViewSet,
 )
 
 router = DefaultRouter()
-router.register("users", UserViewSet)
 router.register("dishes", DishViewSet)
-router.register("stations", StationViewSet)
+router.register("compartment", CompartmentViewSet)
 router.register("menu-days", MenuDayViewSet)
 router.register("menu-items", MenuItemViewSet)
 router.register("devices", DeviceViewSet)

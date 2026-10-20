@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import (
     Capture,
+    Compartment,
     Device,
     Dish,
     Label,
@@ -9,7 +10,6 @@ from .models import (
     MenuItem,
     OverproductionLog,
     Prediction,
-    Station,
     User,
 )
 
@@ -26,9 +26,9 @@ class DishSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class StationSerializer(serializers.ModelSerializer):
+class CompartmentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Station
+        model = Compartment
         fields = "__all__"
 
 
