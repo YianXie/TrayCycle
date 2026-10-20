@@ -54,14 +54,14 @@ const NAVIGATION: Navigation = [
     icon: <DashboardIcon />,
   },
   {
-    segment: 'about-us',
-    title: 'About Us',
-    icon: <PersonIcon />,
-  },
-  {
     segment: 'upload',
     title: 'Upload Captures',
     icon: <CloudUploadIcon />,
+  },
+  {
+    segment: 'about-us',
+    title: 'About Us',
+    icon: <PersonIcon />,
   },
 ];
 
