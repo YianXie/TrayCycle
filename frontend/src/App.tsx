@@ -179,6 +179,8 @@ import { createTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PersonIcon from '@mui/icons-material/Person';
+import TrayCycleLogo from './assets/traycycle-scan.svg';
+
 
 
 import Typography from '@mui/material/Typography';
@@ -242,6 +244,10 @@ export default function App() {
       navigation={NAVIGATION}
       router={router}
       theme={theme}
+      branding={{
+        logo: <img src={TrayCycleLogo} alt="TrayCycle logo" style={{ height: 75, width: 'auto' }} />,
+        title: 'TrayCycle',
+      }}
     >
       <DashboardLayout>
         <Box sx={{ py: 4, px: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
