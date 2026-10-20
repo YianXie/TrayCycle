@@ -41,6 +41,7 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
     "rest_framework",
+    "waste",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -138,5 +139,12 @@ MAILERS = {
 }
 
 
+# CORS configuration
+
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
+
+
+# Custom user model
+
+AUTH_USER_MODEL = "waste.User"
