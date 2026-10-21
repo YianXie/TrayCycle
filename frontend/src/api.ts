@@ -81,8 +81,8 @@ api.interceptors.response.use(
                 // No refresh token available, clear and redirect
                 localStorage.removeItem("access");
                 localStorage.removeItem("refresh");
-                if (window.location.pathname !== "/login") {
-                    window.location.href = "/login";
+                if (window.location.pathname !== "/") {
+                    window.location.href = "/";
                 }
                 return Promise.reject(error);
             }

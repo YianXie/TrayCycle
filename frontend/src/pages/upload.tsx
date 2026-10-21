@@ -61,14 +61,18 @@ export default function Upload() {
         setIsLoading(true);
 
         try {
-            const resp = await api.post("/upload", body, {
+            const resp = await api.post("/captures", body, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
             console.log("Successful", resp.data);
-        } catch (error: any) {
-            setError(error);
+        } catch (error: unknown) {
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Upload failed. Please try again."
+            );
             console.error(error);
         } finally {
             setIsLoading(false);
@@ -113,7 +117,8 @@ export default function Upload() {
                             Remove image
                         </Button>
 
-                        <Button onClick={uploadImg}
+                        <Button
+                            onClick={uploadImg}
                             variant="contained"
                             disabled={isLoading}
                             disableElevation
