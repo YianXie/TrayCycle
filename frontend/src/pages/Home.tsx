@@ -17,9 +17,8 @@ import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
 
 import AboutUs from "./AboutUs";
-import Upload from "./Upload";
 import Dashboard from "./Dashboard";
-
+import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
 
 // Sidebar navigation stuff
@@ -107,8 +106,8 @@ export default function Home() {
                             pathname.replace("/", "").slice(1)}{" "}
                         Page
                     </Typography>
-                    {pathname === '/dashboard' && <Dashboard />}
-                    {pathname === '/about-us' && <AboutUs />}
+                    {pathname === "/dashboard" && <Dashboard />}
+                    {pathname === "/about-us" && <AboutUs />}
                     {pathname === "/upload" && <Upload />}
                 </Box>
             </DashboardLayout>

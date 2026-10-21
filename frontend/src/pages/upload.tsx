@@ -20,12 +20,14 @@ import {
 } from "@mui/material";
 import { type ChangeEvent, useEffect, useState } from "react";
 
+import api from "../api.ts";
 import "../styles/Upload.css";
 
 export default function Upload() {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
         const selected = event.target.files?.[0];
@@ -49,6 +51,29 @@ export default function Upload() {
         setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
     }, [file]);
+
+    async function uploadImg() {
+        if (!file) return;
+
+        const body = new FormData();
+        body.append("image", file);
+
+        setIsLoading(true);
+
+        try {
+            const resp = await api.post("/upload", body, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            console.log("Successful", resp.data);
+        } catch (error: any) {
+            setError(error);
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
     return (
         <Paper variant="outlined" sx={{ p: 3, maxWidth: 500 }}>
             <Stack spacing={2}>
@@ -88,9 +113,12 @@ export default function Upload() {
                             Remove image
                         </Button>
 
-                        <Button variant="contained" disableElevation>
-                            Upload Image
-                            {/* Finish when API is done */}
+                        <Button onClick={uploadImg}
+                            variant="contained"
+                            disabled={isLoading}
+                            disableElevation
+                        >
+                            {!isLoading ? "Upload Image" : "Uploading..."}
                         </Button>
                     </>
                 )}

@@ -6,7 +6,6 @@
  * Displays that our focus is UN SDG 12, specifically food waste
  * Displays some stats about how food waste is a real problem in SAS, SG, and worldwide
  */
-import { useEffect, useState } from "react";
 import {
     Alert,
     Box,
@@ -20,12 +19,10 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
+
 import "../styles/AboutUs.css";
 
 export default function AboutUs() {
-    return(
-        <Typography variant="body1">
-            Learn more about us here.
-        </Typography>
-    );
+    return <Typography variant="body1">Learn more about us here.</Typography>;
 }

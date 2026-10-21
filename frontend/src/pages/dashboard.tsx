@@ -3,8 +3,6 @@
  *
  * Displays food wasted today, trends and other statistical information that the api returns
  */
-
-import { useEffect, useState } from "react";
 import {
     Alert,
     Box,
@@ -18,12 +16,8 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-    return (
-        <Typography variant="body1">
-            Welcome to TrayCycle.
-        </Typography>
-
-    );
+    return <Typography variant="body1">Welcome to TrayCycle.</Typography>;
 }
