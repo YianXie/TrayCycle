@@ -18,7 +18,6 @@ import React from "react";
 
 import AboutUs from "./AboutUs";
 import Upload from "./Upload";
-
 import TrayCycleLogo from "/traycycle-scan.svg";
 
 // Sidebar navigation stuff
