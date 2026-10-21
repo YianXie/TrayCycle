@@ -1,11 +1,10 @@
-/*
+/**
  * Upload component that allows the user to upload a photo of their lunch to the backend server
  *
  * Displays a box for users to upload their files
  * Allows the preview of the images before upload
  * Upload button to upload to server
  */
-
 import {
     Alert,
     Box,
@@ -93,7 +92,6 @@ export default function Upload() {
                             Upload Image
                             {/* Finish when API is done */}
                         </Button>
-
                     </>
                 )}
             </Stack>
