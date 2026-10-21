@@ -16,6 +16,9 @@ import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
 
+import AboutUs from "./AboutUs";
+import Upload from "./Upload";
+
 import TrayCycleLogo from "/traycycle-scan.svg";
 
 // Sidebar navigation stuff
@@ -118,11 +121,7 @@ export default function Home() {
                             Learn more about us here.
                         </Typography>
                     )}
-                    {pathname === "/upload" && (
-                        <Typography variant="body1">
-                            Upload and manage your capture images here.
-                        </Typography>
-                    )}
+                    {pathname === "/upload" && <Upload />}
                 </Box>
             </DashboardLayout>
         </AppProvider>
