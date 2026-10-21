@@ -18,6 +18,8 @@ import React from "react";
 
 import AboutUs from "./AboutUs";
 import Upload from "./Upload";
+import Dashboard from "./Dashboard";
+
 import TrayCycleLogo from "/traycycle-scan.svg";
 
 // Sidebar navigation stuff
@@ -105,21 +107,8 @@ export default function Home() {
                             pathname.replace("/", "").slice(1)}{" "}
                         Page
                     </Typography>
-                    {/* use these checks when done with pages
-          {pathname === '/dashboard' && <DashboardView />}
-          {pathname === '/upload' && <UploadView />}
-          {pathname === '/about-us' && <AboutUsView />}
-          */}
-                    {pathname === "/dashboard" && (
-                        <Typography variant="body1">
-                            Welcome to TrayCycle.
-                        </Typography>
-                    )}
-                    {pathname === "/about-us" && (
-                        <Typography variant="body1">
-                            Learn more about us here.
-                        </Typography>
-                    )}
+                    {pathname === '/dashboard' && <Dashboard />}
+                    {pathname === '/about-us' && <AboutUs />}
                     {pathname === "/upload" && <Upload />}
                 </Box>
             </DashboardLayout>

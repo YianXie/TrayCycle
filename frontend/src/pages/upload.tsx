@@ -1,5 +1,5 @@
 /**
- * Upload component that allows the user to upload a photo of their lunch to the backend server
+ * Upload - allows the user to upload a photo of their lunch to the backend server
  *
  * Displays a box for users to upload their files
  * Allows the preview of the images before upload

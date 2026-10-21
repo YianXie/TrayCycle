@@ -7,9 +7,25 @@
  * Displays some stats about how food waste is a real problem in SAS, SG, and worldwide
  */
 import { useEffect, useState } from "react";
-
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CircularProgress,
+    Divider,
+    IconButton,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+} from "@mui/material";
 import "../styles/AboutUs.css";
 
 export default function AboutUs() {
-    return <section id="AboutUs">{/* someone add something here */}</section>;
+    return(
+        <Typography variant="body1">
+            Learn more about us here.
+        </Typography>
+    );
 }
