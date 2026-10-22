@@ -32,11 +32,11 @@ const NAVIGATION: Navigation = [
         title: "Dashboard",
         icon: <DashboardIcon />,
     },
-    {
-        segment: "upload",
-        title: "Upload Captures",
-        icon: <CloudUploadIcon />,
-    },
+    // {
+    //     segment: "upload",
+    //     title: "Upload Captures",
+    //     icon: <CloudUploadIcon />,
+    // },
     {
         segment: "about-us",
         title: "About Us",
@@ -107,7 +107,7 @@ export default function Home() {
                         Page
                     </Typography>
                     {pathname === "/dashboard" && <Dashboard />}
-                    {pathname === "/about-us" && <AboutUs />}
+                    {/* {pathname === "/about-us" && <AboutUs />} */}
                     {pathname === "/upload" && <Upload />}
                 </Box>
             </DashboardLayout>
