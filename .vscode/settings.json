@@ -1,12 +1,15 @@
 {
   "python.terminal.useEnvFile": true,
-  "cSpell.words": [
-    "collectstatic",
-    "corsheaders",
-    "nostatic",
-    "runserver",
-    "venv",
-    "viewsets"
-  ],
-  "python-envs.defaultEnvManager": "ms-python.python:system"
+  "cSpell.words": ["corsheaders", "nostatic", "runserver", "venv", "viewsets"],
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+
+  "actionButtons": {
+    "commands": [
+      {
+        "name": "Git Sync Custom",
+        "command": "make format && git push",
+        "singleInstance": true
+      }
+    ]
+  }
 }
