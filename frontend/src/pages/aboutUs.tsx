@@ -6,20 +6,7 @@
  * Displays that our focus is UN SDG 12, specifically food waste
  * Displays some stats about how food waste is a real problem in SAS, SG, and worldwide
  */
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CircularProgress,
-    Divider,
-    IconButton,
-    Paper,
-    Stack,
-    TextField,
-    Typography,
-} from "@mui/material";
-import { useEffect, useState } from "react";
+import { Typography } from "@mui/material";
 
 import "../styles/AboutUs.css";
 

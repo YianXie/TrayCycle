@@ -5,20 +5,8 @@
  * Allows the preview of the images before upload
  * Upload button to upload to server
  */
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CircularProgress,
-    Divider,
-    IconButton,
-    Paper,
-    Stack,
-    TextField,
-    Typography,
-} from "@mui/material";
-import { type ChangeEvent, useEffect, useState } from "react";
+import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { type ChangeEvent, useState } from "react";
 
 import api from "../api.ts";
 import "../styles/Upload.css";
@@ -38,19 +26,20 @@ export default function Upload() {
             setError("Image Please");
             return;
         }
+        const url = URL.createObjectURL(selected);
+        setPreviewUrl(url);
         setFile(selected);
         setError("");
-    }
-    useEffect(() => {
-        if (!file) {
-            setPreviewUrl("");
-            return;
-        }
-
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
-    }, [file]);
+    }
+
+    function handleRemoveImage() {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
+        setFile(null);
+        setPreviewUrl("");
+    }
 
     async function uploadImg() {
         if (!file) return;
@@ -113,7 +102,7 @@ export default function Upload() {
                     <>
                         <Typography variant="body2">{file.name}</Typography>
 
-                        <Button onClick={() => setFile(null)}>
+                        <Button onClick={handleRemoveImage}>
                             Remove image
                         </Button>
 

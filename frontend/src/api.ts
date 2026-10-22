@@ -9,9 +9,9 @@ const api = axios.create({
 let isRefreshing = false;
 let failedQueue: {
     resolve: (value: unknown) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
 }[] = [];
-let refreshPromise: Promise<any> | null = null;
+let refreshPromise: Promise<unknown> | null = null;
 
 /**
  * Process queued requests after token refresh completes
