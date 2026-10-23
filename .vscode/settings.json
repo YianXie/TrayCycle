@@ -1,15 +1,6 @@
 {
   "python.terminal.useEnvFile": true,
-  "cSpell.words": [
-    "corsheaders",
-    "nostatic",
-    "runserver",
-    "Toolpad",
-    "traycycle",
-    "venv",
-    "viewsets",
-    "vite"
-  ],
+  "cSpell.words": ["corsheaders", "nostatic", "runserver", "venv", "viewsets"],
   "python-envs.defaultEnvManager": "ms-python.python:system",
 
   "actionButtons": {
