@@ -20,6 +20,7 @@ import AboutUs from "./AboutUs";
 import Dashboard from "./Dashboard";
 import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
+import { PageContainer } from "@toolpad/core";
 
 // Sidebar navigation stuff
 const NAVIGATION: Navigation = [
@@ -106,9 +107,11 @@ export default function Home() {
                             pathname.replace("/", "").slice(1)}{" "}
                         Page
                     </Typography>
-                    {pathname === "/dashboard" && <Dashboard />}
-                    {/* {pathname === "/about-us" && <AboutUs />} */}
-                    {pathname === "/upload" && <Upload />}
+                    <PageContainer>
+                        {pathname === "/dashboard" && <Dashboard />}
+                        {/* {pathname === "/about-us" && <AboutUs />} */}
+                        {pathname === "/upload" && <Upload />}
+                    </PageContainer>
                 </Box>
             </DashboardLayout>
         </AppProvider>
