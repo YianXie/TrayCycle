@@ -14,4 +14,13 @@
     "viewsets"
   ],
   "python-envs.defaultEnvManager": "ms-python.python:system"
+  "actionButtons": {
+    "commands": [
+      {
+        "name": "Git Sync Custom",
+        "command": "make format && git push",
+        "singleInstance": true
+      }
+    ]
+  }
 }
