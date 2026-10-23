@@ -12,6 +12,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { createTheme } from "@mui/material/styles";
+import { PageContainer } from "@toolpad/core";
 import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
@@ -20,7 +21,6 @@ import AboutUs from "./AboutUs";
 import Dashboard from "./Dashboard";
 import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
-import { PageContainer } from "@toolpad/core";
 
 // Sidebar navigation stuff
 const NAVIGATION: Navigation = [
