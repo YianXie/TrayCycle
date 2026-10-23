@@ -6,17 +6,18 @@
  * For all users: displays items organized by predefined tags/categories.
  * Includes item comparison functionality with a bottom slider for selected items.
  */
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+// import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { createTheme } from "@mui/material/styles";
+import { PageContainer } from "@toolpad/core";
 import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
 
-import AboutUs from "./AboutUs";
+// import AboutUs from "./AboutUs";
 import Dashboard from "./Dashboard";
 import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
@@ -32,11 +33,11 @@ const NAVIGATION: Navigation = [
         title: "Dashboard",
         icon: <DashboardIcon />,
     },
-    {
-        segment: "upload",
-        title: "Upload Captures",
-        icon: <CloudUploadIcon />,
-    },
+    // {
+    //     segment: "upload",
+    //     title: "Upload Captures",
+    //     icon: <CloudUploadIcon />,
+    // },
     {
         segment: "about-us",
         title: "About Us",
@@ -106,9 +107,11 @@ export default function Home() {
                             pathname.replace("/", "").slice(1)}{" "}
                         Page
                     </Typography>
-                    {pathname === "/dashboard" && <Dashboard />}
-                    {pathname === "/about-us" && <AboutUs />}
-                    {pathname === "/upload" && <Upload />}
+                    <PageContainer>
+                        {pathname === "/dashboard" && <Dashboard />}
+                        {/* {pathname === "/about-us" && <AboutUs />} */}
+                        {pathname === "/upload" && <Upload />}
+                    </PageContainer>
                 </Box>
             </DashboardLayout>
         </AppProvider>
