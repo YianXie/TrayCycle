@@ -26,9 +26,7 @@ class Station(models.Model):
     """
 
     name = models.CharField(max_length=100, unique=True)
-    is_customizable = models.BooleanField(
-        help_text="Indicates if the station is customizable"
-    )
+    is_customizable = models.BooleanField()
 
     def __str__(self) -> str:
         """Return the name of the station as its string representation."""
@@ -64,38 +62,11 @@ class MenuDay(models.Model):
     """
 
     date = models.DateField(unique=True)
-    dishes = models.ManyToManyField(Dish, through="MenuItem", related_name="menu_days")
+    dishes = models.ManyToManyField(Dish, related_name="menu_days")
 
     def __str__(self) -> str:
         """Return the date of the menu day as its string representation."""
         return str(self.date)
-
-
-class MenuItem(models.Model):
-    """A model representing a menu item at school during lunch.
-
-    Fields:
-        menu_day (ForeignKey): A foreign key to the MenuDay model.
-        dish (ForeignKey): A foreign key to the Dish model.
-        station (ForeignKey): A foreign key to the Station model.
-    """
-
-    menu_day = models.ForeignKey(
-        MenuDay, on_delete=models.CASCADE, related_name="menu_items"
-    )
-    dish = models.ForeignKey(Dish, on_delete=models.PROTECT, related_name="menu_items")
-
-    class Meta:
-        constraints = [  # noqa: RUF012
-            models.UniqueConstraint(
-                fields=["menu_day", "dish"],
-                name="unique_menu_dish",
-            ),
-        ]
-
-    def __str__(self) -> str:
-        """Return a string representation of the menu item."""
-        return f"{self.menu_day} - {self.dish}"
 
 
 class Device(models.Model):
@@ -169,8 +140,8 @@ class Prediction(models.Model):
 
     Fields:
         capture (ForeignKey): A foreign key to the Capture model.
-        waste_bucket (IntegerField): A integer indicating the percentage of waste in the bowl (0, 25, 50, 75, 100).
         dish (ForeignKey): A foreign key to the Dish model.
+        waste_bucket (IntegerField): A integer indicating the percentage of waste in the bowl (0, 25, 50, 75, 100).
         confidence (FloatField): A float indicating the confidence of the prediction.
         created_at (DateTimeField): The timestamp of when the prediction was created.
         model_version (CharField): A string indicating the version of the model used for the prediction
@@ -186,6 +157,18 @@ class Prediction(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     model_version = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [  # noqa: RUF012
+            models.CheckConstraint(
+                condition=models.Q(confidence__gte=0) & models.Q(confidence__lte=1),
+                name="prediction_confidence_0_1",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(waste_bucket__in=WasteBucketChoices.values),
+                name="prediction_valid_bucket",
+            ),
+        ]
 
     def __str__(self) -> str:
         """Return a string representation of the prediction."""
@@ -213,7 +196,11 @@ class Label(models.Model):
         constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["capture", "dish", "labeler"], name="unique_label"
-            )
+            ),
+            models.CheckConstraint(
+                condition=models.Q(waste_bucket__in=WasteBucketChoices.values),
+                name="label_valid_bucket",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -231,7 +218,7 @@ class OverproductionLog(models.Model):
         entered_by (ForeignKey): A foreign key to the User model representing the user who entered
     """
 
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
     dish = models.ForeignKey(
         Dish, on_delete=models.PROTECT, related_name="overproduction_logs"
     )

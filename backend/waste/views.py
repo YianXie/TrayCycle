@@ -28,7 +28,6 @@ from .models import (
     Dish,
     Label,
     MenuDay,
-    MenuItem,
     OverproductionLog,
     Prediction,
     Station,
@@ -40,10 +39,8 @@ from .serializers import (
     DishSerializer,
     LabelSerializer,
     MenuDaySerializer,
-    MenuItemSerializer,
     OverproductionLogSerializer,
     PredictionSerializer,
-    SaveHumanLabelInputSerializer,
     StationSerializer,
     UpdateMenuDaySerializer,
 )
@@ -70,7 +67,6 @@ class MenuDayViewSet(viewsets.ModelViewSet):
 
         Args:
             request (Request): The incoming request object.
-            pk (str | None, optional): Primary key of the menu day (injected by the router). Defaults to None.
 
         Raises:
             ValidationError: If the provided date is not in a valid YYYY-MM-DD format.
@@ -91,25 +87,12 @@ class MenuDayViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             menu_day, created = MenuDay.objects.get_or_create(date=date_obj)
-            menu_day.menu_items.all().delete()  # pyright: ignore[reportAttributeAccessIssue]
-            MenuItem.objects.bulk_create(
-                MenuItem(
-                    menu_day=menu_day,
-                    station=item["station"],
-                    dish=item["dish"],
-                )
-                for item in items  # pyright: ignore[reportGeneralTypeIssues]
-            )
+            menu_day.dishes.set([item["dish"] for item in items])  # pyright: ignore[reportGeneralTypeIssues]
 
         return Response(
             self.get_serializer(menu_day).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
-
-
-class MenuItemViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = MenuItem.objects.all()
-    serializer_class = MenuItemSerializer
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
@@ -188,7 +171,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
         if not filterset.is_valid():
             return Response(filterset.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(filterset.qs, many=True)
+        serializer = self.get_serializer(filterset.qs.distinct(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
@@ -218,45 +201,23 @@ class CaptureViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
-    @action(detail=True, methods=["post"], url_path="label")
-    def save_human_label(self, request: Request, pk: str | None = None) -> Response:
-        """Save a human label for a specific capture.
-
-        Args:
-            request (Request): The incoming request object containing the label data.
-            pk (str | None, optional): Primary key of the scan (injected by the router). Defaults to None.
-
-        Returns:
-            Response: A Response object indicating the success or failure of the label saving operation.
-        """
-        capture = self.get_object()
-        label_serializer = SaveHumanLabelInputSerializer(data=request.data)
-        label_serializer.is_valid(raise_exception=True)
-
-        labeler = request.user
-        dish = label_serializer.validated_data["dish"]
-        waste_bucket = label_serializer.validated_data["waste_bucket"]
-        label, created = Label.objects.update_or_create(
-            capture=capture,
-            dish=dish,
-            labeler=labeler,
-            defaults={"waste_bucket": waste_bucket},
-        )
-
-        return Response(
-            LabelSerializer(label).data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
 
 class PredictionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Prediction.objects.all()
     serializer_class = PredictionSerializer
 
 
-class LabelViewSet(viewsets.ReadOnlyModelViewSet):
+class LabelViewSet(viewsets.ModelViewSet):
     queryset = Label.objects.all()
     serializer_class = LabelSerializer
+
+    def perform_create(self, serializer: LabelSerializer) -> None:
+        """Override the default perform_create method to set the labeler field to the current user.
+
+        Args:
+            serializer (LabelSerializer): The serializer instance used for creating the Label.
+        """
+        serializer.save(labeler=self.request.user)
 
 
 class OverproductionLogViewSet(viewsets.ModelViewSet):
@@ -273,7 +234,7 @@ class OverproductionLogViewSet(viewsets.ModelViewSet):
 
 
 WASTE_KG = ExpressionWrapper(
-    F("waste_bucket") / 100 * F("dish__portion") / 1000.0, output_field=FloatField()
+    F("waste_bucket") * F("dish__portion") / 100000.0, output_field=FloatField()
 )
 
 

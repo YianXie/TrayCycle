@@ -6,7 +6,6 @@ from .models import (
     Dish,
     Label,
     MenuDay,
-    MenuItem,
     OverproductionLog,
     Prediction,
     Station,
@@ -27,11 +26,6 @@ class DishModelAdmin(admin.ModelAdmin):
 class MenuDayModelAdmin(admin.ModelAdmin):
     list_display = ("id", "date")
     list_filter = ("date",)
-
-
-class MenuItemModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "menu_day", "dish")
-    list_filter = ("menu_day", "dish")
 
 
 class DeviceModelAdmin(admin.ModelAdmin):
@@ -71,7 +65,6 @@ admin.site.register(User, admin.ModelAdmin)
 admin.site.register(Dish, DishModelAdmin)
 admin.site.register(Station, StationModelAdmin)
 admin.site.register(MenuDay, MenuDayModelAdmin)
-admin.site.register(MenuItem, MenuItemModelAdmin)
 admin.site.register(Device, DeviceModelAdmin)
 admin.site.register(Capture, CaptureModelAdmin)
 admin.site.register(Prediction, PredictionModelAdmin)

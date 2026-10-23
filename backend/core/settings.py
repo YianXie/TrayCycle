@@ -139,6 +139,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAdminUser",
     ],
+    "EXCEPTION_HANDLER": "waste.exceptions.custom_exception_handler",
 }
 
 

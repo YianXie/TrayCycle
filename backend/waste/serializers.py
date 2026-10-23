@@ -8,12 +8,10 @@ from .models import (
     Dish,
     Label,
     MenuDay,
-    MenuItem,
     OverproductionLog,
     Prediction,
     Station,
     User,
-    WasteBucketChoices,
 )
 
 
@@ -39,18 +37,12 @@ class DishSerializer(ModelSerializer):
 
 
 class MenuDaySerializer(ModelSerializer):
+    dishes = PrimaryKeyRelatedField(queryset=Dish.objects.all(), many=True)
+    dishes_detail = DishSerializer(source="dishes", many=True, read_only=True)
+
     class Meta:
         model = MenuDay
-        fields = ["id", "date"]  # noqa: RUF012
-
-
-class MenuItemSerializer(ModelSerializer):
-    menu_day = MenuDaySerializer(read_only=True)
-    dish = DishSerializer(read_only=True)
-
-    class Meta:
-        model = MenuItem
-        fields = ["id", "menu_day", "dish"]  # noqa: RUF012
+        fields = ["id", "date", "dishes", "dishes_detail"]  # noqa: RUF012
 
 
 class DeviceSerializer(ModelSerializer):
@@ -105,44 +97,70 @@ class PredictionSerializer(ModelSerializer):
 
 
 class LabelSerializer(ModelSerializer):
+    capture = PrimaryKeyRelatedField(queryset=Capture.objects.all())
+    capture_detail = CaptureSerializer(source="capture", read_only=True)
+    dish = PrimaryKeyRelatedField(queryset=Dish.objects.all())
+    dish_detail = DishSerializer(source="dish", read_only=True)
     labeler = UserSerializer(read_only=True)
 
     class Meta:
         model = Label
-        fields = ["id", "capture", "dish", "waste_bucket", "labeler"]  # noqa: RUF012
+        fields = [  # noqa: RUF012
+            "id",
+            "capture",
+            "capture_detail",
+            "dish",
+            "dish_detail",
+            "waste_bucket",
+            "labeler",
+        ]
+
+    def validate(self, attrs: dict) -> dict:
+        """Reject a second label by the same user for the current capture and dish.
+
+        Args:
+            attrs (dict): Validated fields value
+
+        Raises:
+            serializers.ValidationError: If the user has already labeled this capture and dish.
+
+        Returns:
+            dict: The unchanged attrs.
+        """
+        capture = attrs.get("capture", getattr(self.instance, "capture", None))
+        dish = attrs.get("dish", getattr(self.instance, "dish", None))
+        duplicates = Label.objects.filter(
+            capture=capture, dish=dish, labeler=self.context["request"].user
+        )
+        if self.instance is not None:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise serializers.ValidationError(
+                "You already labeled this dish on this capture."
+            )
+        return attrs
 
 
 class OverproductionLogSerializer(ModelSerializer):
     dish = PrimaryKeyRelatedField(queryset=Dish.objects.all())
     dish_detail = DishSerializer(source="dish", read_only=True)
-    entered_by = PrimaryKeyRelatedField(queryset=User.objects.all())
-    entered_by_detail = UserSerializer(source="entered_by", read_only=True)
+    entered_by = UserSerializer(read_only=True)
 
     class Meta:
         model = OverproductionLog
         fields = [  # noqa: RUF012
             "id",
+            "date",
             "dish",
             "dish_detail",
             "overproduced_kg",
             "entered_by",
-            "entered_by_detail",
         ]
-        read_only_fields = ["entered_by"]  # noqa: RUF012
-
-
-class SaveHumanLabelInputSerializer(serializers.Serializer):
-    dish = serializers.PrimaryKeyRelatedField(queryset=Dish.objects.all())
-    waste_bucket = serializers.ChoiceField(choices=WasteBucketChoices.choices)
 
 
 class UpdateMenuDayInputSerializer(serializers.Serializer):
     dish = serializers.PrimaryKeyRelatedField(
         queryset=Dish.objects.all(), allow_null=False
-    )
-    station = serializers.PrimaryKeyRelatedField(
-        queryset=Station.objects.all(),
-        allow_null=False,
     )
 
 

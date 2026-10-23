@@ -1,6 +1,6 @@
 import django_filters
 
-from .models import Dish, Prediction, Station
+from .models import Capture, Dish, Prediction, Station
 
 
 class CaptureFilter(django_filters.FilterSet):
@@ -22,7 +22,7 @@ class CaptureFilter(django_filters.FilterSet):
     )
 
     class Meta:
-        model = Prediction
+        model = Capture
         fields: list[str] = []  # noqa: RUF012
 
 

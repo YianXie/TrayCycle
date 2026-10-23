@@ -5,7 +5,10 @@
     "collectstatic",
     "corsheaders",
     "filterset",
+    "menuday",
     "nostatic",
+    "overproductionlog",
+    "overproductionlogs",
     "runserver",
     "venv",
     "viewsets"
