@@ -37,3 +37,12 @@ make lint  # lint code
 make test  # run tests
 make format-check  # check code formatting
 ```
+
+## Deployment
+
+The frontend, backend, and PostgreSQL database are deployed on [Render](https://www.render.com). The media storage and custom domain are bought from [Cloudflare][https://www.cloudflare.com].
+
+- Frontend: a free static site
+- Backend: a 0.5 CPU 512 MB RAM web service
+- Database: 0.1 CPU 256 MB 10GB PostgreSQL service
+- Media storage: Cloudflare R2 object storage service
