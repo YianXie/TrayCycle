@@ -3,6 +3,7 @@ import secrets
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class WasteBucketChoices(models.IntegerChoices):
@@ -17,37 +18,40 @@ class User(AbstractUser):
     """A custom user model that extends the default Django AbstractUser model."""
 
 
+class Station(models.Model):
+    """A model representing a station at school during lunch.
+
+    Fields:
+        name (CharField): The name of the station.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    is_customizable = models.BooleanField(
+        help_text="Indicates if the station is customizable"
+    )
+
+    def __str__(self) -> str:
+        """Return the name of the station as its string representation."""
+        return self.name
+
+
 class Dish(models.Model):
     """A model representing a dish at school during lunch.
 
     Fields:
         name (CharField): The name of the dish.
         portion (PositiveIntegerfield): The standard portion size in grams.
-        active (BooleanField): A boolean indicating whether the dish is currently being served.
+        station (ForeignKey): A foreign key to the Station model.
     """
 
     name = models.CharField(max_length=100, unique=True)
     portion = models.PositiveIntegerField(help_text="Standard portion size in grams")
-    active = models.BooleanField(default=True)
+    station = models.ForeignKey(
+        Station, on_delete=models.PROTECT, related_name="dishes"
+    )
 
     def __str__(self) -> str:
         """Return the name of the dish as its string representation."""
-        return self.name
-
-
-class Compartment(models.Model):
-    """A model representing a tray compartment.
-
-    Fields:
-        name (CharField): The name of the compartment.
-        active (BooleanField): A boolean indicating whether the compartment is currently open.
-    """
-
-    name = models.CharField(max_length=100, unique=True)
-    active = models.BooleanField(default=True)
-
-    def __str__(self):
-        """Return the name of the compartment as its string representation."""
         return self.name
 
 
@@ -73,7 +77,7 @@ class MenuItem(models.Model):
     Fields:
         menu_day (ForeignKey): A foreign key to the MenuDay model.
         dish (ForeignKey): A foreign key to the Dish model.
-        compartment (ForeignKey): A foreign key to the Compartment model.
+        station (ForeignKey): A foreign key to the Station model.
     """
 
     menu_day = models.ForeignKey(
@@ -81,23 +85,17 @@ class MenuItem(models.Model):
     )
     dish = models.ForeignKey(Dish, on_delete=models.PROTECT, related_name="menu_items")
 
-    compartment = models.ForeignKey(
-        Compartment, on_delete=models.PROTECT, related_name="menu_items"
-    )
-
     class Meta:
         constraints = [  # noqa: RUF012
             models.UniqueConstraint(
-                fields=["menu_day", "compartment"], name="unique_menu_compartment"
-            ),
-            models.UniqueConstraint(
-                fields=["menu_day", "dish"], name="unique_menu_dish"
+                fields=["menu_day", "dish"],
+                name="unique_menu_dish",
             ),
         ]
 
     def __str__(self) -> str:
         """Return a string representation of the menu item."""
-        return f"{self.menu_day} - {self.dish} - {self.compartment}"
+        return f"{self.menu_day} - {self.dish}"
 
 
 class Device(models.Model):
@@ -121,10 +119,10 @@ class Device(models.Model):
 
 
 class Capture(models.Model):
-    """A model representing a capture of a tray at school during lunch.
+    """A model representing a capture of a bowl at school during lunch.
 
     Fields:
-        image (ImageField): An image of the tray.
+        image (ImageField): An image of the bowl.
         captured_at (DateTimeField): The timestamp of when the capture was taken.
         received_at (DateTimeField): The timestamp of when the capture was received.
         device (ForeignKey): A foreign key to the Device model, nullable.
@@ -134,7 +132,7 @@ class Capture(models.Model):
     """
 
     image = models.ImageField(upload_to="captures/")
-    captured_at = models.DateTimeField()
+    captured_at = models.DateTimeField(default=timezone.now)
     received_at = models.DateTimeField(auto_now_add=True)
     device = models.ForeignKey(
         Device, on_delete=models.PROTECT, related_name="captures", null=True, blank=True
@@ -167,11 +165,11 @@ class Capture(models.Model):
 
 
 class Prediction(models.Model):
-    """A model representing a prediction of the waste on a tray at school during lunch.
+    """A model representing a prediction of the waste on a bowl at school during lunch.
 
     Fields:
         capture (ForeignKey): A foreign key to the Capture model.
-        waste_bucket (IntegerField): A integer indicating the percentage of waste in the tray (0, 25, 50, 75, 100).
+        waste_bucket (IntegerField): A integer indicating the percentage of waste in the bowl (0, 25, 50, 75, 100).
         dish (ForeignKey): A foreign key to the Dish model.
         confidence (FloatField): A float indicating the confidence of the prediction.
         created_at (DateTimeField): The timestamp of when the prediction was created.
@@ -195,12 +193,12 @@ class Prediction(models.Model):
 
 
 class Label(models.Model):
-    """A model representing a human label of the waste on a tray at school during lunch.
+    """A model representing a human label of the waste on a bowl at school during lunch.
 
     Fields:
         capture (ForeignKey): A foreign key to the Capture model.
         dish (ForeignKey): A foreign key to the Dish model.
-        waste_bucket (IntegerField): A integer indicating the percentage of waste in the tray (0, 25, 50, 75, 100).
+        waste_bucket (IntegerField): A integer indicating the percentage of waste in the bowl (0, 25, 50, 75, 100).
         labeler (ForeignKey): A foreign key to the User model representing the user who labeled the capture.
     """
 
@@ -229,7 +227,7 @@ class OverproductionLog(models.Model):
     Fields:
         date (DateField): The date of the overproduction.
         dish (ForeignKey): A foreign key to the Dish model.
-        overproduced_amount (DecimalField): A decimal indicating the amount of overproduction in kg
+        overproduced_kg (DecimalField): A decimal indicating the amount of overproduction in kg
         entered_by (ForeignKey): A foreign key to the User model representing the user who entered
     """
 
@@ -237,9 +235,7 @@ class OverproductionLog(models.Model):
     dish = models.ForeignKey(
         Dish, on_delete=models.PROTECT, related_name="overproduction_logs"
     )
-    overproduced_amount = models.DecimalField(
-        max_digits=6, decimal_places=2, help_text="Amount of overproduction in kg"
-    )
+    overproduced_kg = models.DecimalField(max_digits=6, decimal_places=2)
     entered_by = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name="overproduction_logs"
     )
@@ -253,4 +249,4 @@ class OverproductionLog(models.Model):
 
     def __str__(self) -> str:
         """Return a string representation of the overproduction log."""
-        return f"{self.date} - {self.dish} - {self.overproduced_amount} - {self.entered_by}"
+        return f"{self.date} - {self.dish} - {self.overproduced_kg} - {self.entered_by}"

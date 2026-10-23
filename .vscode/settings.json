@@ -1,8 +1,10 @@
 {
   "python.terminal.useEnvFile": true,
   "cSpell.words": [
+    "authtoken",
     "collectstatic",
     "corsheaders",
+    "filterset",
     "nostatic",
     "runserver",
     "venv",
