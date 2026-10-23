@@ -40,7 +40,7 @@ make format-check  # check code formatting
 
 ## Deployment
 
-The frontend, backend, and PostgreSQL database are deployed on [Render](https://www.render.com). The media storage and custom domain are bought from [Cloudflare][https://www.cloudflare.com].
+The frontend, backend, and PostgreSQL database are deployed on [Render](https://www.render.com). The media storage and custom domain are bought from [Cloudflare](https://www.cloudflare.com).
 
 - Frontend: a free static site
 - Backend: a 0.5 CPU 512 MB RAM web service
