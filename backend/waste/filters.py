@@ -20,6 +20,10 @@ class CaptureFilter(django_filters.FilterSet):
     max_confidence = django_filters.NumberFilter(
         field_name="predictions__confidence", lookup_expr="lte"
     )
+    status = django_filters.ChoiceFilter(
+        field_name="predictions__status",
+        choices=Capture.StatusChoices.choices,
+    )
 
     class Meta:
         model = Capture
