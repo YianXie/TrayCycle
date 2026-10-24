@@ -218,7 +218,7 @@ class OverproductionLog(models.Model):
         entered_by (ForeignKey): A foreign key to the User model representing the user who entered
     """
 
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.now)
     dish = models.ForeignKey(
         Dish, on_delete=models.PROTECT, related_name="overproduction_logs"
     )

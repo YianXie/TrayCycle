@@ -43,7 +43,7 @@ class CaptureModelAdmin(admin.ModelAdmin):
         "source",
         "status",
     )
-    list_filters = ("device", "uploaded_by", "source", "status")
+    list_filter = ("device", "uploaded_by", "source", "status")
 
 
 class PredictionModelAdmin(admin.ModelAdmin):
