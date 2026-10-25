@@ -16,6 +16,8 @@ import { PageContainer } from "@toolpad/core";
 import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
+import usePageTitle from "../UsePageTitle";
+
 
 // import AboutUs from "./AboutUs";
 import Dashboard from "./Dashboard";
@@ -74,7 +76,7 @@ export default function Home() {
             navigate: (path: string | URL) => setPathname(String(path)),
         };
     }, [pathname]);
-
+    usePageTitle("Home");
     return (
         <AppProvider
             navigation={NAVIGATION}
