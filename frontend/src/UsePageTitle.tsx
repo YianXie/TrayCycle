@@ -10,7 +10,7 @@ import { useLayoutEffect } from "react";
  */
 function usePageTitle(title: string) {
     useLayoutEffect(() => {
-        document.title = "TrayCycle | "+title;
+        document.title = "TrayCycle | " + title;
     }, [title]);
 }
 

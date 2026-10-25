@@ -7,13 +7,12 @@
  * Displays some stats about how food waste is a real problem in SAS, SG, and worldwide
  */
 import { Typography } from "@mui/material";
+
 import usePageTitle from "../UsePageTitle";
 import "../styles/AboutUs.css";
 
 export default function AboutUs() {
     usePageTitle("About Us");
 
-    return (
-        <Typography variant="body1">Learn more about us here.</Typography>
-    );
+    return <Typography variant="body1">Learn more about us here.</Typography>;
 }
