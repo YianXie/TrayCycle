@@ -8,11 +8,8 @@
  */
 import { Typography } from "@mui/material";
 
-import usePageTitle from "../UsePageTitle";
 import "../styles/AboutUs.css";
 
 export default function AboutUs() {
-    usePageTitle("About Us");
-
     return <Typography variant="body1">Learn more about us here.</Typography>;
 }

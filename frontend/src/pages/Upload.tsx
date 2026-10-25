@@ -8,12 +8,10 @@
 import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { type ChangeEvent, useState } from "react";
 
-import usePageTitle from "../UsePageTitle";
 import api from "../api.ts";
 import "../styles/Upload.css";
 
 export default function Upload() {
-    usePageTitle("Upload");
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState("");
     const [error, setError] = useState("");

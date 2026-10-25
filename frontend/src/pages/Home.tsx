@@ -18,9 +18,9 @@ import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
 
 import usePageTitle from "../UsePageTitle";
-// import AboutUs from "./AboutUs";
+import AboutUs from "./AboutUs";
 import Dashboard from "./Dashboard";
-import Upload from "./Upload";
+// import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
 
 // Sidebar navigation stuff
@@ -67,7 +67,11 @@ const theme = createTheme({
 export default function Home() {
     // State track active navigation menu item
     const [pathname, setPathname] = React.useState("/dashboard");
-
+    const pages: Record<string, string> = {
+        "/dashboard": "Dashboard",
+        "/about-us": "About Us",
+        "/upload": "Upload",
+    };
     const router = React.useMemo(() => {
         return {
             pathname,
@@ -75,7 +79,7 @@ export default function Home() {
             navigate: (path: string | URL) => setPathname(String(path)),
         };
     }, [pathname]);
-    usePageTitle("Home");
+    usePageTitle(pages[pathname] ?? "Home");
     return (
         <AppProvider
             navigation={NAVIGATION}
@@ -110,8 +114,8 @@ export default function Home() {
                     </Typography>
                     <PageContainer>
                         {pathname === "/dashboard" && <Dashboard />}
-                        {/* {pathname === "/about-us" && <AboutUs />} */}
-                        {pathname === "/upload" && <Upload />}
+                        {pathname === "/about-us" && <AboutUs />}
+                        {/* {pathname === "/upload" && <Upload />} */}
                     </PageContainer>
                 </Box>
             </DashboardLayout>
