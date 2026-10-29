@@ -106,12 +106,6 @@ export default function Home() {
                         gap: 2,
                     }}
                 >
-                    <Typography variant="h4">
-                        Viewing:{" "}
-                        {pathname.replace("/", "").charAt(0).toUpperCase() +
-                            pathname.replace("/", "").slice(1)}{" "}
-                        Page
-                    </Typography>
                     <PageContainer>
                         {pathname === "/dashboard" && <Dashboard />}
                         {pathname === "/about-us" && <AboutUs />}
