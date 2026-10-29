@@ -193,13 +193,13 @@ export default function AboutUs() {
                     display: "flex",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: { xs: 2, md: 3 },
+                    gap: { xs: 5, md: 7 },
                     p: { xs: 3, md: 4 },
                     borderRadius: 3,
                     border: "1px solid",
                     borderColor: "divider",
                     background: (theme) =>
-                        `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 70%)`,
+                        `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent 70%)`,
                 }}
             >
                 <Box
