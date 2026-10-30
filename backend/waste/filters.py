@@ -1,5 +1,6 @@
 import django_filters
 
+from .constants import StatusChoices
 from .models import Capture, Dish, Prediction, Station
 
 
@@ -21,8 +22,8 @@ class CaptureFilter(django_filters.FilterSet):
         field_name="predictions__confidence", lookup_expr="lte"
     )
     status = django_filters.ChoiceFilter(
-        field_name="predictions__status",
-        choices=Capture.StatusChoices.choices,
+        field_name="status",
+        choices=StatusChoices.choices,
     )
 
     class Meta:

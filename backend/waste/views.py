@@ -10,8 +10,9 @@ from django.db.models import (
     FloatField,
     Sum,
 )
+from django.utils import timezone
 from django.utils.dateparse import parse_date
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAdminUser
@@ -21,6 +22,13 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from .authentication import DeviceTokenAuthentication
+from .constants import (
+    CAPTURE_FAILURE_REASON_MAX_LENGTH,
+    CAPTURE_TIMEOUT_MINUTES,
+    SourceChoices,
+    StatusChoices,
+)
+from .exceptions import ConflictException
 from .filters import CaptureFilter, PredictionStatsFilter
 from .models import (
     Capture,
@@ -32,7 +40,7 @@ from .models import (
     Prediction,
     Station,
 )
-from .permissions import IsDeviceOrAdmin
+from .permissions import IsDeviceOrAdmin, IsWorkerOrAdmin
 from .serializers import (
     CaptureSerializer,
     DeviceSerializer,
@@ -61,6 +69,16 @@ class MenuDayViewSet(viewsets.ModelViewSet):
     serializer_class = MenuDaySerializer
 
     lookup_field = "date"
+
+    def get_permissions(self) -> list:
+        """Override the default permissions to allow workers to list menu days.
+
+        Returns:
+            list: A list of permission instances.
+        """
+        if self.action in ("list", "retrieve"):
+            return [IsWorkerOrAdmin()]
+        return [IsAdminUser()]
 
     def update(self, request: Request, *args, **kwargs) -> Response:
         """Override the default update method to allow updating by date.
@@ -143,19 +161,19 @@ class CaptureViewSet(viewsets.ModelViewSet):
 
     authentication_classes = [  # noqa: RUF012
         DeviceTokenAuthentication,
-        *api_settings.DEFAULT_AUTHENTICATION_CLASSES,  # type: ignore
+        *api_settings.DEFAULT_AUTHENTICATION_CLASSES,  # pyright: ignore[reportOptionalIterable]
     ]
 
-    permission_classes = [IsAdminUser]  # noqa: RUF012
-
     def get_permissions(self) -> list:
-        """Override the default permissions to allow any user to create a capture.
+        """Override the default permissions to allow devices to create captures and workers to list captures.
 
         Returns:
             list: A list of permission instances.
         """
         if self.action == "create":
             return [IsDeviceOrAdmin()]
+        if self.action in ("claim", "fail"):
+            return [IsWorkerOrAdmin()]
         return [IsAdminUser()]
 
     def list(self, request: Request, *args: object, **kwargs: object) -> Response:
@@ -190,21 +208,123 @@ class CaptureViewSet(viewsets.ModelViewSet):
             serializer.save(
                 device=self.request.auth,  # pyright: ignore[reportAttributeAccessIssue]
                 uploaded_by=None,
-                source=Capture.Sources.CAMERA,
+                source=SourceChoices.CAMERA,
             )
         else:
             serializer.save(
                 device=None,
                 uploaded_by=self.request.user,
-                source=Capture.Sources.UPLOAD,
+                source=SourceChoices.UPLOAD,
             )
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
+    @action(detail=False, methods=["post"], url_path="claim")
+    def claim(self, request: Request) -> Response:
+        """Claim capture instances for processing. Set any captures that have been processing for longer than the timeout to pending, and then claim up to 3 captures for processing.
 
-class PredictionViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Prediction.objects.all()
+        Args:
+            request (Request): The incoming request object.
+        """
+        processing_queryset = Capture.objects.filter(
+            status=StatusChoices.PROCESSING
+        ).select_for_update(skip_locked=True)
+        for capture in processing_queryset:
+            if (
+                capture.claimed_at
+                and timezone.localtime() - capture.claimed_at
+                > timezone.timedelta(minutes=CAPTURE_TIMEOUT_MINUTES)
+            ):
+                capture.status = StatusChoices.PENDING
+                capture.claimed_at = None
+                capture.claimed_by = None
+                capture.save(update_fields=["status", "claimed_at", "claimed_by"])
+
+        pending_queryset = (
+            Capture.objects.filter(status=StatusChoices.PENDING)
+            .select_for_update(skip_locked=True)
+            .order_by("received_at")[:3]
+        )
+        response_data = []
+        with transaction.atomic():
+            for capture in pending_queryset:
+                capture.status = StatusChoices.PROCESSING
+                capture.claimed_at = timezone.localtime()
+                capture.claimed_by = request.user
+                capture.attempts += 1
+                update_fields = ["status", "claimed_at", "claimed_by", "attempts"]
+                if capture.attempts <= 3:
+                    response_data.append(self.get_serializer(capture).data)
+                else:
+                    capture.status = StatusChoices.FAILED
+                    capture.failure_reason = "Exceeded maximum processing attempts."
+                    update_fields.append("failure_reason")
+                capture.save(update_fields=update_fields)
+        return Response(
+            response_data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"], url_path="fail")
+    def fail(self, request: Request, pk: str | None = None) -> Response:
+        """Mark a capture as failed and set the status of the associated capture to "failed".
+
+        Args:
+            request (Request): The incoming request object.
+            pk (str | None, optional): Primary key of the capture (injected by the router). Defaults to None.
+
+        Returns:
+            Response: A Response object containing the serialized capture data and HTTP status code.
+        """
+        capture = self.get_object()
+        if capture.status != StatusChoices.PROCESSING:
+            raise ConflictException(
+                "Capture not marked as processing, cannot mark as failed."
+            )
+        capture.status = StatusChoices.FAILED
+        failure_reason = request.data.get("failure_reason", "")
+        capture.failure_reason = failure_reason[:CAPTURE_FAILURE_REASON_MAX_LENGTH]
+        capture.save(update_fields=["status", "failure_reason"])
+        return Response(self.get_serializer(capture).data, status=status.HTTP_200_OK)
+
+
+class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = Prediction.objects.select_related(
+        "capture", "dish", "dish__station", "capture__device", "capture__uploaded_by"
+    )
     serializer_class = PredictionSerializer
+
+    def get_permissions(self) -> list:
+        """Override the default permissions to allow workers to create predictions.
+
+        Returns:
+            list: A list of permission instances.
+        """
+        if self.action == "create":
+            return [IsWorkerOrAdmin()]
+        return [IsAdminUser()]
+
+    def perform_create(self, serializer: PredictionSerializer) -> None:
+        """Override the default perform_create method to ensure that the associated capture is marked as pending or processing before creating a prediction.
+
+        Args:
+            serializer (PredictionSerializer): The serializer instance used for creating the Prediction.
+
+        Raises:
+            ConflictException: If the associated capture is not marked as pending or processing.
+        """
+        if serializer.validated_data["capture"].status != StatusChoices.PROCESSING:  # type: ignore
+            raise ConflictException(
+                "Capture not marked as processing, cannot create prediction."
+            )
+        capture = Capture.objects.select_for_update(skip_locked=True).get(
+            id=serializer.validated_data["capture"].id  # type: ignore
+        )
+        with transaction.atomic():
+            if capture.status == StatusChoices.PROCESSING:
+                serializer.save()
+                serializer.validated_data["capture"].status = StatusChoices.DONE  # type: ignore
+                serializer.validated_data["capture"].save(update_fields=["status"])  # type: ignore
 
 
 class LabelViewSet(viewsets.ModelViewSet):

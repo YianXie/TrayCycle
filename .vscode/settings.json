@@ -4,6 +4,7 @@
     "authtoken",
     "collectstatic",
     "corsheaders",
+    "dotenv",
     "filterset",
     "menuday",
     "nostatic",
@@ -13,7 +14,6 @@
     "venv",
     "viewsets"
   ],
-  "python-envs.defaultEnvManager": "ms-python.python:system"
   "actionButtons": {
     "commands": [
       {
