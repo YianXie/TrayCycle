@@ -1,7 +1,16 @@
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import {
+    Navigate,
+    Route,
+    BrowserRouter as Router,
+    Routes,
+} from "react-router-dom";
 
 import Layout from "./components/layout/Layout";
+import AboutUs from "./pages/AboutUs";
+import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
+import Upload from "./pages/Upload";
 
 /**
  * Main App component that sets up routing and layout
@@ -12,15 +21,17 @@ export default function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<Layout />}>
-                    <Route
-                        index
-                        element={
-                            <>
-                                <Home />
-                            </>
-                        }
-                    />
+                <Route element={<Layout />}>
+                    <Route element={<Home />}>
+                        <Route
+                            index
+                            element={<Navigate to="/dashboard" replace />}
+                        />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="about-us" element={<AboutUs />} />
+                        {/* <Route path="upload" element={<Upload />} /> */}
+                        <Route path="*" element={<NotFound />} />
+                    </Route>
                 </Route>
             </Routes>
         </Router>
