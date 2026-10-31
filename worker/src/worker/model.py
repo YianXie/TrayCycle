@@ -10,7 +10,7 @@ from worker.exceptions import ModelException
 class PredictionResult(TypedDict):
     """A TypedDict representing the structure of a prediction result."""
 
-    dish: str | None
+    dish: int
     waste_bucket: int
     confidence: float
     model_version: str

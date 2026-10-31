@@ -13,9 +13,9 @@ from dotenv import load_dotenv
 from PIL import Image
 
 import worker
-
-from .exceptions import ModelException
-from .model import Predictor
+from worker.exceptions import ModelException
+from worker.model import Predictor
+from worker.utils import iso_datetime_to_date
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,7 +35,9 @@ local_now = datetime.now().astimezone()
 local_filename = local_now.strftime("%Y%m%d_%H%M%S_%z")
 logs_dir = Path(worker.__file__).parent / "logs"
 os.makedirs(logs_dir, exist_ok=True)
-file_handler = logging.FileHandler(f"logs/worker_{local_filename}.log", mode="a")
+file_handler = logging.FileHandler(
+    logs_dir / f"worker_{local_filename}.log", mode="a", encoding="utf-8"
+)
 file_handler.setLevel(logging.ERROR)
 
 log_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
@@ -85,14 +87,15 @@ class Worker:
                 menu_cache = {}
                 for capture in captures:
                     try:
-                        if capture["capture_at"] not in menu_cache:
+                        captured_at = iso_datetime_to_date(capture["captured_at"])
+                        if captured_at not in menu_cache:
                             menu_day_response = session.get(
-                                f"{ENDPOINT}/api/menus/{capture['capture_at']}",
+                                f"{ENDPOINT}/api/menus/{captured_at}",
                                 timeout=10,
                             )
                             menu_day_response.raise_for_status()
-                            menu_cache[capture["capture_at"]] = menu_day_response.json()
-                        dishes = menu_cache[capture["capture_at"]]["dishes"] or []
+                            menu_cache[captured_at] = menu_day_response.json()
+                        dishes = menu_cache[captured_at]["dishes"] or []
 
                         image_url = capture["image"]
                         image_response = requests.get(image_url, timeout=5)
@@ -103,11 +106,17 @@ class Worker:
                             prediction = predictor.predict(image, dishes)
                         except ModelException as e:
                             # Model exception occurred, report failure to the server
-                            update_response = session.post(
-                                f"{ENDPOINT}/api/captures/{capture['id']}/fail",
-                                timeout=10,
-                                json={"failure_reason": str(e)},
-                            )
+                            try:
+                                update_response = session.post(
+                                    f"{ENDPOINT}/api/captures/{capture['id']}/fail",
+                                    timeout=10,
+                                    json={"failure_reason": str(e)},
+                                )
+                            except requests.exceptions.RequestException as e:
+                                logger.error(
+                                    f"Error reporting failure for capture {capture['id']}: {e}"
+                                )
+                            continue  # Skip to the next capture
                         else:
                             update_response = session.post(
                                 f"{ENDPOINT}/api/predictions",
@@ -146,11 +155,16 @@ class Worker:
                         logger.error(
                             f"Image error occurred while processing capture {capture['id']}: {img_err}"
                         )
-                        update_response = session.post(
-                            f"{ENDPOINT}/api/captures/{capture['id']}/fail",
-                            timeout=10,
-                            json={"failure_reason": str(img_err)},
-                        )
+                        try:
+                            update_response = session.post(
+                                f"{ENDPOINT}/api/captures/{capture['id']}/fail",
+                                timeout=10,
+                                json={"failure_reason": str(img_err)},
+                            )
+                        except requests.exceptions.RequestException as e:
+                            logger.error(
+                                f"Error reporting failure for capture {capture['id']}: {e}"
+                            )
             except requests.exceptions.RequestException as e:
                 logger.error("Error fetching tasks: %s", e)
                 captures = []
@@ -172,7 +186,7 @@ class Worker:
             # Only sleep if there are no captures to process, otherwise continue immediately to process the next batch.
             if len(captures) == 0:
                 logger.info(
-                    "Less than 3 captures processed. Sleeping for %.2f seconds.",
+                    "No captures to process. Sleeping for %.2f seconds.",
                     sleep_needed,
                 )
                 self.stop_flag.wait(sleep_needed)
@@ -184,5 +198,5 @@ class Worker:
 
 
 if __name__ == "__main__":
-    worker = Worker()
-    worker.start_worker()
+    worker_obj = Worker()
+    worker_obj.start_worker()

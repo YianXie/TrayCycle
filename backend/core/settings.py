@@ -79,6 +79,7 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")  # pyright: ignore[reportArgumentType]
 }
+DATABASES["default"]["ATOMIC_REQUESTS"] = False
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
 
 
@@ -173,6 +174,7 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
     },
+    "DATETIME_FORMAT": "iso-8601",
 }
 
 

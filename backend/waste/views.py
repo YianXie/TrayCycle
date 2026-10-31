@@ -23,7 +23,9 @@ from rest_framework.views import APIView
 
 from .authentication import DeviceTokenAuthentication
 from .constants import (
+    CAPTURE_CLAIM_BATCH_SIZE,
     CAPTURE_FAILURE_REASON_MAX_LENGTH,
+    CAPTURE_MAX_ATTEMPTS,
     CAPTURE_TIMEOUT_MINUTES,
     SourceChoices,
     StatusChoices,
@@ -154,9 +156,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
 
 class CaptureViewSet(viewsets.ModelViewSet):
-    queryset = Capture.objects.select_related("device", "uploaded_by").prefetch_related(
-        "predictions__dish__station"
-    )
+    queryset = Capture.objects.select_related(
+        "device",
+        "uploaded_by",
+        "claimed_by",
+    ).prefetch_related("predictions__capture")
     serializer_class = CaptureSerializer
 
     authentication_classes = [  # noqa: RUF012
@@ -226,40 +230,47 @@ class CaptureViewSet(viewsets.ModelViewSet):
         Args:
             request (Request): The incoming request object.
         """
-        processing_queryset = Capture.objects.filter(
-            status=StatusChoices.PROCESSING
-        ).select_for_update(skip_locked=True)
-        for capture in processing_queryset:
-            if (
-                capture.claimed_at
-                and timezone.localtime() - capture.claimed_at
-                > timezone.timedelta(minutes=CAPTURE_TIMEOUT_MINUTES)
-            ):
-                capture.status = StatusChoices.PENDING
-                capture.claimed_at = None
-                capture.claimed_by = None
-                capture.save(update_fields=["status", "claimed_at", "claimed_by"])
+        with transaction.atomic():
+            processing_queryset = Capture.objects.select_for_update(
+                skip_locked=True
+            ).filter(status=StatusChoices.PROCESSING)
+            for capture in processing_queryset:
+                if capture.claimed_at is None:
+                    capture.claimed_at = timezone.localtime()
+                    capture.save(update_fields=["claimed_at"])
+                elif (timezone.localtime() - capture.claimed_at) > timezone.timedelta(  # pyright: ignore[reportOperatorIssue]
+                    minutes=CAPTURE_TIMEOUT_MINUTES
+                ):
+                    capture.status = StatusChoices.PENDING
+                    capture.save(update_fields=["status"])
 
-        pending_queryset = (
-            Capture.objects.filter(status=StatusChoices.PENDING)
-            .select_for_update(skip_locked=True)
-            .order_by("received_at")[:3]
-        )
         response_data = []
         with transaction.atomic():
-            for capture in pending_queryset:
-                capture.status = StatusChoices.PROCESSING
-                capture.claimed_at = timezone.localtime()
-                capture.claimed_by = request.user
-                capture.attempts += 1
-                update_fields = ["status", "claimed_at", "claimed_by", "attempts"]
-                if capture.attempts <= 3:
-                    response_data.append(self.get_serializer(capture).data)
-                else:
-                    capture.status = StatusChoices.FAILED
-                    capture.failure_reason = "Exceeded maximum processing attempts."
-                    update_fields.append("failure_reason")
-                capture.save(update_fields=update_fields)
+            pending_queryset = (
+                Capture.objects.select_for_update(skip_locked=True)
+                .filter(status=StatusChoices.PENDING)
+                .order_by("received_at")
+            )
+            while len(response_data) < CAPTURE_CLAIM_BATCH_SIZE:
+                batch = list(
+                    pending_queryset[: CAPTURE_CLAIM_BATCH_SIZE - len(response_data)]
+                )
+                if not batch:
+                    break
+                for capture in batch:
+                    capture.status = StatusChoices.PROCESSING
+                    capture.attempts += 1
+                    update_fields = ["status", "attempts"]
+                    if capture.attempts <= CAPTURE_MAX_ATTEMPTS:
+                        capture.claimed_at = timezone.localtime()
+                        capture.claimed_by = request.user
+                        update_fields.extend(["claimed_at", "claimed_by"])
+                        response_data.append(self.get_serializer(capture).data)
+                    else:
+                        capture.status = StatusChoices.FAILED
+                        capture.failure_reason = "Exceeded maximum processing attempts."
+                        update_fields.append("failure_reason")
+                    capture.save(update_fields=update_fields)
         return Response(
             response_data,
             status=status.HTTP_200_OK,
@@ -273,18 +284,36 @@ class CaptureViewSet(viewsets.ModelViewSet):
             request (Request): The incoming request object.
             pk (str | None, optional): Primary key of the capture (injected by the router). Defaults to None.
 
+        Raises:
+            ConflictException: If the capture is not marked as processing or if it is claimed by another
+
         Returns:
             Response: A Response object containing the serialized capture data and HTTP status code.
         """
-        capture = self.get_object()
-        if capture.status != StatusChoices.PROCESSING:
-            raise ConflictException(
-                "Capture not marked as processing, cannot mark as failed."
-            )
-        capture.status = StatusChoices.FAILED
-        failure_reason = request.data.get("failure_reason", "")
-        capture.failure_reason = failure_reason[:CAPTURE_FAILURE_REASON_MAX_LENGTH]
-        capture.save(update_fields=["status", "failure_reason"])
+        with transaction.atomic():
+            try:
+                capture = Capture.objects.select_for_update(skip_locked=True).get(pk=pk)
+                if capture.status != StatusChoices.PROCESSING:
+                    raise ConflictException(
+                        "Capture not marked as processing, cannot mark as failed."
+                    )
+                if (
+                    request.user.is_staff is False
+                    and capture.claimed_by != request.user
+                ):
+                    raise ConflictException(
+                        "Capture claimed by another user, cannot mark as failed."
+                    )
+                capture.status = StatusChoices.FAILED
+                failure_reason = str(request.data.get("failure_reason", ""))  # pyright: ignore[reportAttributeAccessIssue]
+                capture.failure_reason = failure_reason[
+                    :CAPTURE_FAILURE_REASON_MAX_LENGTH
+                ]
+                capture.save(update_fields=["status", "failure_reason"])
+            except Capture.DoesNotExist:
+                raise ConflictException(
+                    "Capture is locked by another process, cannot mark as failed."
+                )
         return Response(self.get_serializer(capture).data, status=status.HTTP_200_OK)
 
 
@@ -317,14 +346,20 @@ class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
             raise ConflictException(
                 "Capture not marked as processing, cannot create prediction."
             )
-        capture = Capture.objects.select_for_update(skip_locked=True).get(
-            id=serializer.validated_data["capture"].id  # type: ignore
-        )
         with transaction.atomic():
-            if capture.status == StatusChoices.PROCESSING:
-                serializer.save()
-                serializer.validated_data["capture"].status = StatusChoices.DONE  # type: ignore
-                serializer.validated_data["capture"].save(update_fields=["status"])  # type: ignore
+            try:
+                capture = Capture.objects.select_for_update(skip_locked=True).get(
+                    pk=serializer.validated_data["capture"].pk  # type: ignore
+                )
+                if capture.status == StatusChoices.PROCESSING:
+                    capture.status = StatusChoices.DONE
+                    capture.save(update_fields=["status"])
+                    serializer.validated_data["capture"] = capture  # type: ignore
+                    serializer.save()
+            except Capture.DoesNotExist:
+                raise ConflictException(
+                    "Capture is locked by another process, cannot create prediction."
+                )
 
 
 class LabelViewSet(viewsets.ModelViewSet):

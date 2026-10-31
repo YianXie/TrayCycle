@@ -58,6 +58,10 @@ class Command(BaseCommand):
         if user is None:
             user = User.objects.create_user(username=username)
             created = True
+        elif user is not None and user.is_staff or user.is_superuser:
+            raise CommandError(
+                f"User '{username}' already exists and is a staff or superuser. Cannot create a worker user with the same username."
+            )
         user.is_staff = False
         user.is_superuser = False
         user.set_unusable_password()

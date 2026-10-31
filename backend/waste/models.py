@@ -117,7 +117,7 @@ class Capture(models.Model):
     claimed_at = models.DateTimeField(null=True, blank=True)
     claimed_by = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="claimed_captures",
         null=True,
         blank=True,

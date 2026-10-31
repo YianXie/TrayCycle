@@ -10,11 +10,6 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-# Functions from the following migrations need manual copying.
-# Move them and any dependencies into this file, then update the
-# RunPython operations to refer to the local versions:
-# waste.migrations.0007_create_workers_group
-
 def create_user_groups(apps, schema_editor):
     Group = apps.get_model('auth', 'Group')
     Group.objects.get_or_create(name='Workers')

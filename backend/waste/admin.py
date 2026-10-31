@@ -52,13 +52,14 @@ class CaptureModelAdmin(admin.ModelAdmin):
 
     @admin.action(description="Mark selected captures as pending")
     def mark_as_pending(self, request: HttpRequest, queryset: QuerySet) -> None:
-        """Admin action to mark selected captures as pending.
+        """Admin action to mark selected captures as pending, ignoring those that are already done.
 
         Args:
             request: The current admin request.
             queryset: The entries the admin selected.
         """
         try:
+            queryset = queryset.exclude(status=StatusChoices.DONE)
             updated: int = queryset.update(
                 claimed_at=None,
                 claimed_by=None,
