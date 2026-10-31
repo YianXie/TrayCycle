@@ -5,13 +5,12 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-
-class WasteBucketChoices(models.IntegerChoices):
-    NONE = 0
-    SOME = 25
-    HALF = 50
-    MOST = 75
-    ALL = 100
+from .constants import (
+    CAPTURE_FAILURE_REASON_MAX_LENGTH,
+    SourceChoices,
+    StatusChoices,
+    WasteBucketChoices,
+)
 
 
 class User(AbstractUser):
@@ -98,12 +97,16 @@ class Capture(models.Model):
         received_at (DateTimeField): The timestamp of when the capture was received.
         device (ForeignKey): A foreign key to the Device model, nullable.
         uploaded_by (ForeignKey): A foreign key to the User model, nullable.
+        claimed_at (DateTimeField): The timestamp of when the capture was claimed for processing, nullable.
+        claimed_by (ForeignKey): A foreign key to the User model representing the worker user that claimed the capture for processing, nullable.
+        attempts (PositiveIntegerField): An integer indicating the number of attempts made to process the capture
         source (CharField): A string indicating the source of the capture (camera or upload).
         status (CharField): A string indicating the status of the capture (pending, processing, done, failed).
+        failure_reason (CharField): A string indicating the reason for failure, nullable.
     """
 
     image = models.ImageField(upload_to="captures/")
-    captured_at = models.DateTimeField(default=timezone.now)
+    captured_at = models.DateTimeField(default=timezone.localtime)
     received_at = models.DateTimeField(auto_now_add=True)
     device = models.ForeignKey(
         Device, on_delete=models.PROTECT, related_name="captures", null=True, blank=True
@@ -111,23 +114,23 @@ class Capture(models.Model):
     uploaded_by = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name="captures", null=True, blank=True
     )
-
-    class Sources(models.TextChoices):
-        CAMERA = "camera", "Camera"
-        UPLOAD = "upload", "Upload"
-
-    source = models.CharField(
-        max_length=100, choices=Sources.choices, default=Sources.CAMERA
+    claimed_at = models.DateTimeField(null=True, blank=True)
+    claimed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="claimed_captures",
+        null=True,
+        blank=True,
     )
-
-    class StatusChoices(models.TextChoices):
-        PENDING = "pending", "Pending"
-        PROCESSING = "processing", "Processing"
-        DONE = "done", "Done"
-        FAILED = "failed", "Failed"
-
+    attempts = models.PositiveIntegerField(default=0)
+    source = models.CharField(
+        max_length=100, choices=SourceChoices.choices, default=SourceChoices.CAMERA
+    )
     status = models.CharField(
         max_length=100, choices=StatusChoices.choices, default=StatusChoices.PENDING
+    )
+    failure_reason = models.CharField(
+        max_length=CAPTURE_FAILURE_REASON_MAX_LENGTH, null=True, blank=True
     )
 
     def __str__(self) -> str:
@@ -218,7 +221,7 @@ class OverproductionLog(models.Model):
         entered_by (ForeignKey): A foreign key to the User model representing the user who entered
     """
 
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.localdate)
     dish = models.ForeignKey(
         Dish, on_delete=models.PROTECT, related_name="overproduction_logs"
     )

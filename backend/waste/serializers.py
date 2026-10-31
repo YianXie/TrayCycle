@@ -52,13 +52,15 @@ class DeviceSerializer(ModelSerializer):
 
 
 class PredictionSummarySerializer(ModelSerializer):
-    dish = DishSerializer(read_only=True)
+    dish = PrimaryKeyRelatedField(queryset=Dish.objects.all())
+    dish_detail = DishSerializer(source="dish", read_only=True)
 
     class Meta:
         model = Prediction
         fields = [  # noqa: RUF012
             "id",
             "dish",
+            "dish_detail",
             "waste_bucket",
             "confidence",
             "model_version",
@@ -69,6 +71,7 @@ class PredictionSummarySerializer(ModelSerializer):
 class CaptureSerializer(ModelSerializer):
     device = DeviceSerializer(read_only=True)
     uploaded_by = UserSerializer(read_only=True)
+    claimed_by = UserSerializer(read_only=True)
     predictions = PredictionSummarySerializer(many=True, read_only=True)
 
     class Meta:
@@ -81,19 +84,34 @@ class CaptureSerializer(ModelSerializer):
             "device",
             "source",
             "uploaded_by",
+            "claimed_at",
+            "claimed_by",
+            "attempts",
             "status",
+            "failure_reason",
             "predictions",
         ]
-        read_only_fields = ["device", "source", "uploaded_by", "status", "received_at"]  # noqa: RUF012
+        read_only_fields = [  # noqa: RUF012
+            "device",
+            "source",
+            "uploaded_by",
+            "claimed_at",
+            "attempts",
+            "status",
+            "failure_reason",
+            "received_at",
+        ]
 
 
 class PredictionSerializer(ModelSerializer):
-    dish = DishSerializer(read_only=True)
-    capture = CaptureSerializer(read_only=True)
+    capture = PrimaryKeyRelatedField(queryset=Capture.objects.all())
+    capture_detail = CaptureSerializer(source="capture", read_only=True)
+    dish = PrimaryKeyRelatedField(queryset=Dish.objects.all())
+    dish_detail = DishSerializer(source="dish", read_only=True)
 
     class Meta:
         model = Prediction
-        fields = ["capture", *PredictionSummarySerializer.Meta.fields]  # noqa: RUF012
+        fields = ["capture", "capture_detail", *PredictionSummarySerializer.Meta.fields]  # noqa: RUF012
 
 
 class LabelSerializer(ModelSerializer):

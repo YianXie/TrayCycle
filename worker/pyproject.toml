@@ -1,0 +1,14 @@
+[project]
+name = "worker"
+version = "0.1.0"
+description = "TrayCycle inference background worker process"
+requires-python = ">=3.14"
+dependencies = [
+    "pillow>=13.0.0",
+    "python-dotenv>=1.2.4",
+    "requests>=2.34.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
