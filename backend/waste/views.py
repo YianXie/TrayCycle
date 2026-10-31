@@ -1,4 +1,5 @@
 import secrets
+from collections import defaultdict
 
 from django.db import transaction
 from django.db.models import (
@@ -8,8 +9,13 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     FloatField,
+    IntegerField,
+    OuterRef,
+    QuerySet,
+    Subquery,
     Sum,
 )
+from django.db.models.functions import Coalesce, TruncDate
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
@@ -389,8 +395,39 @@ class OverproductionLogViewSet(viewsets.ModelViewSet):
 
 
 WASTE_KG = ExpressionWrapper(
-    F("waste_bucket") * F("dish__portion") / 100000.0, output_field=FloatField()
+    F("final_waste_bucket") * F("final_portion") / 100000.0,
+    output_field=FloatField(),
 )
+
+
+def final_results() -> QuerySet:
+    """Build one row per capture: its latest prediction, overridden by its latest human label if one exists.
+
+    Returns:
+        QuerySet: Predictions annotated with final_dish_id, final_waste_bucket, final_portion and final_dish_name.
+    """
+    latest_prediction = Prediction.objects.filter(capture=OuterRef("capture")).order_by(
+        "-created_at", "-id"
+    )
+    latest_label = Label.objects.filter(capture=OuterRef("capture")).order_by("-id")
+    final_dish = Dish.objects.filter(pk=OuterRef("final_dish_id"))
+    return (
+        Prediction.objects.filter(pk=Subquery(latest_prediction.values("pk")[:1]))
+        .annotate(
+            final_dish_id=Coalesce(
+                Subquery(latest_label.values("dish")[:1]),
+                F("dish_id"),
+                output_field=IntegerField(),
+            ),
+            final_waste_bucket=Coalesce(
+                Subquery(latest_label.values("waste_bucket")[:1]), F("waste_bucket")
+            ),
+        )
+        .annotate(
+            final_portion=Subquery(final_dish.values("portion")[:1]),
+            final_dish_name=Subquery(final_dish.values("name")[:1]),
+        )
+    )
 
 
 def waste_metrics() -> dict[str, Aggregate]:
@@ -401,7 +438,7 @@ def waste_metrics() -> dict[str, Aggregate]:
     """
     return {
         "bowl_count": Count("id"),
-        "average_waste_percent": Avg("waste_bucket"),
+        "average_waste_percent": Avg("final_waste_bucket"),
         "total_waste_kg": Sum(WASTE_KG),
         "average_waste_kg": Avg(WASTE_KG),
     }
@@ -428,31 +465,64 @@ def clean(row: dict) -> dict:
 
 class StatsView(APIView):
     def get(self, request: Request) -> Response:
-        """Get the statistics for predictions based on the provided filters.
+        """Get the statistics for predictions based on the provided filters, counting each capture once with its latest prediction or, if labeled, its latest human label.
 
         Args:
             request (Request): The incoming request object containing query parameters for filtering predictions.
 
         Returns:
-            Response: A Response object containing the aggregated statistics and per-dish statistics based on the filtered predictions.
+            Response: A Response object containing the aggregated statistics, per-dish statistics, and daily trends (overall and per dish) based on the filtered predictions.
         """
         filterset = PredictionStatsFilter(
-            request.query_params, queryset=Prediction.objects.all()
+            request.query_params, queryset=final_results()
         )
         if not filterset.is_valid():
             return Response(filterset.errors, status=status.HTTP_400_BAD_REQUEST)
 
         predictions = filterset.qs
+
         per_dish = (
-            predictions.values("dish_id", dish_name=F("dish__name"))
+            predictions.values("final_dish_id", "final_dish_name")
             .annotate(**waste_metrics())
             .order_by("-total_waste_kg")
         )
+
+        per_dish_waste_bucket_distribution = predictions.values(
+            "final_dish_id", "final_waste_bucket"
+        )
+        waste_bucket_distribution = defaultdict(lambda: defaultdict(int))
+        for row in per_dish_waste_bucket_distribution:
+            waste_bucket_distribution[row["final_dish_id"]][
+                row["final_waste_bucket"]
+            ] += 1
+
+        by_date = predictions.annotate(date=TruncDate("capture__captured_at"))
+        daily = by_date.values("date").annotate(**waste_metrics()).order_by("date")
+        per_dish_daily = (
+            by_date.values("final_dish_id", "date")
+            .annotate(**waste_metrics())
+            .order_by("date")
+        )
+        dish_trends = defaultdict(list)
+        for row in per_dish_daily:
+            dish_trends[row.pop("final_dish_id")].append(clean(row))
+
         return Response(
             {
                 **clean(predictions.aggregate(**waste_metrics())),
-                "dishes": [clean(row) for row in per_dish],
-            }
+                "daily": [clean(row) for row in daily],
+                "dishes": [
+                    {
+                        "dish_id": (dish_id := row.pop("final_dish_id")),
+                        "dish_name": row.pop("final_dish_name"),
+                        **clean(row),
+                        "daily": dish_trends[dish_id],
+                        "waste_bucket_distribution": waste_bucket_distribution[dish_id],
+                    }
+                    for row in per_dish
+                ],
+            },
+            status=status.HTTP_200_OK,
         )
 
 
