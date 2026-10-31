@@ -14,7 +14,7 @@ def iso_datetime_to_date(iso_datetime_str: str) -> str:
     try:
         # Parse the ISO 8601 datetime string
         dt = datetime.fromisoformat(iso_datetime_str)
-        # Return the date part in YYYY-MM-DD format
-        return dt.astimezone().date().isoformat()
+        # Return the date part in YYYY-MM-DD format, keeping the server's UTC offset from the string
+        return dt.date().isoformat()
     except ValueError as e:
         raise ValueError(f"Invalid ISO 8601 datetime string: {iso_datetime_str}") from e

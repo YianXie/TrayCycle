@@ -165,8 +165,16 @@ class Worker:
                             logger.error(
                                 f"Error reporting failure for capture {capture['id']}: {e}"
                             )
+                    except Exception:
+                        logger.exception(
+                            "Unexpected error occurred while processing capture %s. Skipping this capture.",
+                            capture.get("id") if isinstance(capture, dict) else capture,
+                        )
             except requests.exceptions.RequestException as e:
                 logger.error("Error fetching tasks: %s", e)
+                captures = []
+            except Exception:
+                logger.exception("Unexpected error occurred while polling for tasks.")
                 captures = []
             else:
                 logger.info(

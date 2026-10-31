@@ -141,6 +141,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAdminUser",
     ],
     "EXCEPTION_HANDLER": "waste.exceptions.custom_exception_handler",
+    "DATETIME_FORMAT": "iso-8601",
 }
 
 
@@ -174,7 +175,6 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
     },
-    "DATETIME_FORMAT": "iso-8601",
 }
 
 

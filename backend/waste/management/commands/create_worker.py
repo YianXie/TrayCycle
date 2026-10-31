@@ -62,6 +62,10 @@ class Command(BaseCommand):
             raise CommandError(
                 f"User '{username}' already exists and is a staff or superuser. Cannot create a worker user with the same username."
             )
+        elif not user.groups.filter(pk=group.pk).exists():
+            raise CommandError(
+                f"User '{username}' already exists and is not in the '{group_name}' group. Cannot convert an existing user into a worker."
+            )
         user.is_staff = False
         user.is_superuser = False
         user.set_unusable_password()

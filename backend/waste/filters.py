@@ -1,5 +1,5 @@
 import django_filters
-from django.db.models import QuerySet
+from django.db.models import OuterRef, QuerySet, Subquery
 
 from .constants import CAPTURE_REVIEW_THRESHOLD, StatusChoices
 from .models import Capture, Dish, Prediction, Station
@@ -40,10 +40,19 @@ class CaptureFilter(django_filters.FilterSet):
         """Keep rows whose latest prediction is below the threshold and has no label."""
         if not value:
             return queryset
-        return queryset.filter(
-            predictions__confidence__lt=CAPTURE_REVIEW_THRESHOLD,
-            labels__isnull=True,
-        ).distinct()
+        latest_prediction = Prediction.objects.filter(capture=OuterRef("pk")).order_by(
+            "-created_at", "-id"
+        )
+        return (
+            queryset.annotate(
+                latest_confidence=Subquery(latest_prediction.values("confidence")[:1])
+            )
+            .filter(
+                latest_confidence__lt=CAPTURE_REVIEW_THRESHOLD,
+                labels__isnull=True,
+            )
+            .distinct()
+        )
 
 
 class PredictionStatsFilter(django_filters.FilterSet):

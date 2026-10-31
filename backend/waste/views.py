@@ -20,7 +20,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -167,7 +167,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
         "device",
         "uploaded_by",
         "claimed_by",
-    ).prefetch_related("predictions__capture")
+    ).prefetch_related("predictions__dish__station")
     serializer_class = CaptureSerializer
     pagination_class = CaptureResultsPagination
 
@@ -201,7 +201,9 @@ class CaptureViewSet(viewsets.ModelViewSet):
         if not filterset.is_valid():
             return Response(filterset.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(filterset.qs.distinct(), many=True)
+        queryset = filterset.qs.distinct().order_by("-captured_at", "-id")
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(paginated_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
@@ -319,6 +321,8 @@ class CaptureViewSet(viewsets.ModelViewSet):
                 ]
                 capture.save(update_fields=["status", "failure_reason"])
             except Capture.DoesNotExist:
+                if not Capture.objects.filter(pk=pk).exists():
+                    raise NotFound("Capture not found.")
                 raise ConflictException(
                     "Capture is locked by another process, cannot mark as failed."
                 )
@@ -350,15 +354,22 @@ class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         Raises:
             ConflictException: If the associated capture is not marked as pending or processing.
         """
-        if serializer.validated_data["capture"].status != StatusChoices.PROCESSING:  # type: ignore
-            raise ConflictException(
-                "Capture not marked as processing, cannot create prediction."
-            )
         with transaction.atomic():
             try:
                 capture = Capture.objects.select_for_update(skip_locked=True).get(
                     pk=serializer.validated_data["capture"].pk  # type: ignore
                 )
+                if capture.status != StatusChoices.PROCESSING:
+                    raise ConflictException(
+                        "Capture not marked as processing, cannot create prediction."
+                    )
+                if (
+                    not self.request.user.is_staff
+                    and capture.claimed_by != self.request.user
+                ):
+                    raise ConflictException(
+                        "Capture claimed by another user, cannot create prediction."
+                    )
                 if capture.status == StatusChoices.PROCESSING:
                     capture.status = StatusChoices.DONE
                     capture.save(update_fields=["status"])
