@@ -48,6 +48,7 @@ from .models import (
     Prediction,
     Station,
 )
+from .pagination import CaptureResultsPagination
 from .permissions import IsDeviceOrAdmin, IsWorkerOrAdmin
 from .serializers import (
     CaptureSerializer,
@@ -168,6 +169,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
         "claimed_by",
     ).prefetch_related("predictions__capture")
     serializer_class = CaptureSerializer
+    pagination_class = CaptureResultsPagination
 
     authentication_classes = [  # noqa: RUF012
         DeviceTokenAuthentication,

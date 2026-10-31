@@ -15,6 +15,9 @@ CAPTURE_TIMEOUT_MINUTES = 3
 # The maximum length of the failure_reason field in the Capture model.
 CAPTURE_FAILURE_REASON_MAX_LENGTH = 255
 
+# Predictions below this confidence are considered to need review.
+CAPTURE_REVIEW_THRESHOLD = 0.75
+
 
 class WasteBucketChoices(models.IntegerChoices):
     """An enumeration representing the different waste bucket choices."""

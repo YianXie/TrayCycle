@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import QuerySet
 
-from .constants import StatusChoices
+from .constants import CAPTURE_REVIEW_THRESHOLD, StatusChoices
 from .models import Capture, Dish, Prediction, Station
 
 
@@ -26,10 +26,24 @@ class CaptureFilter(django_filters.FilterSet):
         field_name="status",
         choices=StatusChoices.choices,
     )
+    needs_review = django_filters.BooleanFilter(
+        method="filter_needs_review",
+    )
 
     class Meta:
         model = Capture
         fields: list[str] = []  # noqa: RUF012
+
+    def filter_needs_review(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Keep rows whose latest prediction is below the threshold and has no label."""
+        if not value:
+            return queryset
+        return queryset.filter(
+            predictions__confidence__lt=CAPTURE_REVIEW_THRESHOLD,
+            labels__isnull=True,
+        ).distinct()
 
 
 class PredictionStatsFilter(django_filters.FilterSet):
