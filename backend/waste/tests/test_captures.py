@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from waste.constants import SourceChoices
-from waste.models import Capture, Prediction
+from waste.models import Capture, Label, Prediction
 
 from .shared import IN_MEMORY_STORAGE, WasteAPITestCase, make_image
 
@@ -87,4 +87,70 @@ class CaptureAPITests(WasteAPITestCase):
             query_params={"max_confidence": 0.9},
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)  # pyright: ignore[reportAttributeAccessIssue]
-        self.assertEqual(len(res.data), 1)  # pyright: ignore[reportAttributeAccessIssue] # Only one distinct capture should be returned
+        self.assertEqual(res.data["count"], 1)  # pyright: ignore[reportAttributeAccessIssue] # Only one distinct capture should be returned
+
+    def make_prediction(self, capture: Capture, confidence: float) -> Prediction:
+        """Create a prediction for the given capture with the given confidence.
+
+        Args:
+            capture (Capture): the capture the prediction belongs to.
+            confidence (float): the model confidence of the prediction.
+
+        Returns:
+            Prediction: the created prediction.
+        """
+        return Prediction.objects.create(
+            capture=capture,
+            dish=self.dish,
+            waste_bucket=25,
+            confidence=confidence,
+            model_version="v1",
+        )
+
+    def needs_review_ids(self) -> set[int]:
+        """Return the ids of the captures returned by ?needs_review=true."""
+        res = self.client.get(
+            reverse("capture-list"),
+            query_params={"needs_review": "true"},
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)  # pyright: ignore[reportAttributeAccessIssue]
+        return {row["id"] for row in res.data["results"]}  # pyright: ignore[reportAttributeAccessIssue]
+
+    def test_needs_review_uses_latest_prediction(self) -> None:
+        """Test that only the latest prediction's confidence decides whether a capture needs review."""
+        self.login_admin()
+
+        # Old low-confidence prediction superseded by a confident one
+        recovered = Capture.objects.create(image=make_image())
+        self.make_prediction(recovered, 0.4)
+        self.make_prediction(recovered, 0.95)
+
+        # Old confident prediction superseded by a low-confidence one
+        regressed = Capture.objects.create(image=make_image())
+        self.make_prediction(regressed, 0.95)
+        self.make_prediction(regressed, 0.4)
+
+        self.assertEqual(self.needs_review_ids(), {regressed.pk})
+
+    def test_needs_review_excludes_labeled_captures(self) -> None:
+        """Test that a low-confidence capture that already has a label does not need review."""
+        self.login_admin()
+
+        labeled = Capture.objects.create(image=make_image())
+        self.make_prediction(labeled, 0.4)
+        Label.objects.create(
+            capture=labeled, dish=self.dish, waste_bucket=50, labeler=self.admin
+        )
+
+        unlabeled = Capture.objects.create(image=make_image())
+        self.make_prediction(unlabeled, 0.4)
+
+        self.assertEqual(self.needs_review_ids(), {unlabeled.pk})
+
+    def test_needs_review_excludes_captures_without_predictions(self) -> None:
+        """Test that a capture with no predictions yet is not flagged for review."""
+        self.login_admin()
+
+        Capture.objects.create(image=make_image())
+
+        self.assertEqual(self.needs_review_ids(), set())

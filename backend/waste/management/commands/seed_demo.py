@@ -3,6 +3,7 @@ from io import BytesIO
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import transaction
 from PIL import Image
 
 from waste.constants import WORKER_GROUP_NAME, SourceChoices, StatusChoices
@@ -75,16 +76,17 @@ class Command(BaseCommand):
                         "Database data already exists. Replacing existing data."
                     )
                 )
-                # Delete in dependency order so PROTECT foreign keys don't block deletion
-                Label.objects.all().delete()
-                OverproductionLog.objects.all().delete()
-                Prediction.objects.all().delete()
-                Capture.objects.all().delete()
-                MenuDay.objects.all().delete()
-                Device.objects.all().delete()
-                Dish.objects.all().delete()
-                Station.objects.all().delete()
-                User.objects.all().delete()
+                with transaction.atomic():
+                    # Delete existing data in the correct order to avoid foreign key constraint violations
+                    Label.objects.all().delete()
+                    OverproductionLog.objects.all().delete()
+                    Prediction.objects.all().delete()
+                    Capture.objects.all().delete()
+                    MenuDay.objects.all().delete()
+                    Device.objects.all().delete()
+                    Dish.objects.all().delete()
+                    Station.objects.all().delete()
+                    User.objects.all().delete()
 
         # Define the demo data
         users = [

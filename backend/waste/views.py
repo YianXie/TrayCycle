@@ -1,5 +1,6 @@
 import secrets
 from collections import defaultdict
+from datetime import timedelta
 
 from django.db import transaction
 from django.db.models import (
@@ -204,7 +205,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
         queryset = filterset.qs.distinct().order_by("-captured_at", "-id")
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(paginated_queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(serializer.data)
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
         """Create a new capture instance.
@@ -248,7 +249,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
                 if capture.claimed_at is None:
                     capture.claimed_at = timezone.localtime()
                     capture.save(update_fields=["claimed_at"])
-                elif (timezone.localtime() - capture.claimed_at) > timezone.timedelta(  # pyright: ignore[reportOperatorIssue]
+                elif (timezone.localtime() - capture.claimed_at) > timedelta(  # pyright: ignore[reportOperatorIssue]
                     minutes=CAPTURE_TIMEOUT_MINUTES
                 ):
                     capture.status = StatusChoices.PENDING
@@ -258,6 +259,8 @@ class CaptureViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             pending_queryset = (
                 Capture.objects.select_for_update(skip_locked=True)
+                .select_related("device", "uploaded_by")
+                .prefetch_related("predictions__dish__station")
                 .filter(status=StatusChoices.PENDING)
                 .order_by("received_at")
             )
@@ -332,6 +335,10 @@ class CaptureViewSet(viewsets.ModelViewSet):
 class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Prediction.objects.select_related(
         "capture", "dish", "dish__station", "capture__device", "capture__uploaded_by"
+    ).prefetch_related(
+        "capture__predictions",
+        "capture__predictions__dish",
+        "capture__predictions__dish__station",
     )
     serializer_class = PredictionSerializer
 
@@ -370,11 +377,10 @@ class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                     raise ConflictException(
                         "Capture claimed by another user, cannot create prediction."
                     )
-                if capture.status == StatusChoices.PROCESSING:
-                    capture.status = StatusChoices.DONE
-                    capture.save(update_fields=["status"])
-                    serializer.validated_data["capture"] = capture  # type: ignore
-                    serializer.save()
+                capture.status = StatusChoices.DONE
+                capture.save(update_fields=["status"])
+                serializer.validated_data["capture"] = capture  # type: ignore
+                serializer.save()
             except Capture.DoesNotExist:
                 raise ConflictException(
                     "Capture is locked by another process, cannot create prediction."
