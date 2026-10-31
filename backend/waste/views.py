@@ -1,4 +1,6 @@
 import secrets
+from collections import defaultdict
+from datetime import timedelta
 
 from django.db import transaction
 from django.db.models import (
@@ -8,12 +10,18 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     FloatField,
+    IntegerField,
+    OuterRef,
+    QuerySet,
+    Subquery,
     Sum,
 )
+from django.db.models.functions import Coalesce, TruncDate
+from django.utils import timezone
 from django.utils.dateparse import parse_date
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -21,6 +29,15 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from .authentication import DeviceTokenAuthentication
+from .constants import (
+    CAPTURE_CLAIM_BATCH_SIZE,
+    CAPTURE_FAILURE_REASON_MAX_LENGTH,
+    CAPTURE_MAX_ATTEMPTS,
+    CAPTURE_TIMEOUT_MINUTES,
+    SourceChoices,
+    StatusChoices,
+)
+from .exceptions import ConflictException
 from .filters import CaptureFilter, PredictionStatsFilter
 from .models import (
     Capture,
@@ -32,7 +49,8 @@ from .models import (
     Prediction,
     Station,
 )
-from .permissions import IsDeviceOrAdmin
+from .pagination import CaptureResultsPagination
+from .permissions import IsDeviceOrAdmin, IsWorkerOrAdmin
 from .serializers import (
     CaptureSerializer,
     DeviceSerializer,
@@ -61,6 +79,16 @@ class MenuDayViewSet(viewsets.ModelViewSet):
     serializer_class = MenuDaySerializer
 
     lookup_field = "date"
+
+    def get_permissions(self) -> list:
+        """Override the default permissions to allow workers to list menu days.
+
+        Returns:
+            list: A list of permission instances.
+        """
+        if self.action in ("list", "retrieve"):
+            return [IsWorkerOrAdmin()]
+        return [IsAdminUser()]
 
     def update(self, request: Request, *args, **kwargs) -> Response:
         """Override the default update method to allow updating by date.
@@ -136,26 +164,29 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
 
 class CaptureViewSet(viewsets.ModelViewSet):
-    queryset = Capture.objects.select_related("device", "uploaded_by").prefetch_related(
-        "predictions__dish__station"
-    )
+    queryset = Capture.objects.select_related(
+        "device",
+        "uploaded_by",
+        "claimed_by",
+    ).prefetch_related("predictions__dish__station")
     serializer_class = CaptureSerializer
+    pagination_class = CaptureResultsPagination
 
     authentication_classes = [  # noqa: RUF012
         DeviceTokenAuthentication,
-        *api_settings.DEFAULT_AUTHENTICATION_CLASSES,  # type: ignore
+        *api_settings.DEFAULT_AUTHENTICATION_CLASSES,  # pyright: ignore[reportOptionalIterable]
     ]
 
-    permission_classes = [IsAdminUser]  # noqa: RUF012
-
     def get_permissions(self) -> list:
-        """Override the default permissions to allow any user to create a capture.
+        """Override the default permissions to allow devices to create captures and workers to list captures.
 
         Returns:
             list: A list of permission instances.
         """
         if self.action == "create":
             return [IsDeviceOrAdmin()]
+        if self.action in ("claim", "fail"):
+            return [IsWorkerOrAdmin()]
         return [IsAdminUser()]
 
     def list(self, request: Request, *args: object, **kwargs: object) -> Response:
@@ -171,8 +202,10 @@ class CaptureViewSet(viewsets.ModelViewSet):
         if not filterset.is_valid():
             return Response(filterset.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(filterset.qs.distinct(), many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = filterset.qs.distinct().order_by("-captured_at", "-id")
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(paginated_queryset, many=True)
+        return self.get_paginated_response(serializer.data)
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
         """Create a new capture instance.
@@ -190,21 +223,168 @@ class CaptureViewSet(viewsets.ModelViewSet):
             serializer.save(
                 device=self.request.auth,  # pyright: ignore[reportAttributeAccessIssue]
                 uploaded_by=None,
-                source=Capture.Sources.CAMERA,
+                source=SourceChoices.CAMERA,
             )
         else:
             serializer.save(
                 device=None,
                 uploaded_by=self.request.user,
-                source=Capture.Sources.UPLOAD,
+                source=SourceChoices.UPLOAD,
             )
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
+    @action(detail=False, methods=["post"], url_path="claim")
+    def claim(self, request: Request) -> Response:
+        """Claim capture instances for processing. Set any captures that have been processing for longer than the timeout to pending, and then claim up to 3 captures for processing.
 
-class PredictionViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Prediction.objects.all()
+        Args:
+            request (Request): The incoming request object.
+        """
+        with transaction.atomic():
+            processing_queryset = Capture.objects.select_for_update(
+                skip_locked=True
+            ).filter(status=StatusChoices.PROCESSING)
+            for capture in processing_queryset:
+                if capture.claimed_at is None:
+                    capture.claimed_at = timezone.localtime()
+                    capture.save(update_fields=["claimed_at"])
+                elif (timezone.localtime() - capture.claimed_at) > timedelta(  # pyright: ignore[reportOperatorIssue]
+                    minutes=CAPTURE_TIMEOUT_MINUTES
+                ):
+                    capture.status = StatusChoices.PENDING
+                    capture.save(update_fields=["status"])
+
+        response_data = []
+        with transaction.atomic():
+            pending_queryset = (
+                Capture.objects.select_for_update(skip_locked=True)
+                .select_related("device", "uploaded_by")
+                .prefetch_related("predictions__dish__station")
+                .filter(status=StatusChoices.PENDING)
+                .order_by("received_at")
+            )
+            while len(response_data) < CAPTURE_CLAIM_BATCH_SIZE:
+                batch = list(
+                    pending_queryset[: CAPTURE_CLAIM_BATCH_SIZE - len(response_data)]
+                )
+                if not batch:
+                    break
+                for capture in batch:
+                    capture.status = StatusChoices.PROCESSING
+                    capture.attempts += 1
+                    update_fields = ["status", "attempts"]
+                    if capture.attempts <= CAPTURE_MAX_ATTEMPTS:
+                        capture.claimed_at = timezone.localtime()
+                        capture.claimed_by = request.user
+                        update_fields.extend(["claimed_at", "claimed_by"])
+                        response_data.append(self.get_serializer(capture).data)
+                    else:
+                        capture.status = StatusChoices.FAILED
+                        capture.failure_reason = "Exceeded maximum processing attempts."
+                        update_fields.append("failure_reason")
+                    capture.save(update_fields=update_fields)
+        return Response(
+            response_data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"], url_path="fail")
+    def fail(self, request: Request, pk: str | None = None) -> Response:
+        """Mark a capture as failed and set the status of the associated capture to "failed".
+
+        Args:
+            request (Request): The incoming request object.
+            pk (str | None, optional): Primary key of the capture (injected by the router). Defaults to None.
+
+        Raises:
+            ConflictException: If the capture is not marked as processing or if it is claimed by another
+
+        Returns:
+            Response: A Response object containing the serialized capture data and HTTP status code.
+        """
+        with transaction.atomic():
+            try:
+                capture = Capture.objects.select_for_update(skip_locked=True).get(pk=pk)
+                if capture.status != StatusChoices.PROCESSING:
+                    raise ConflictException(
+                        "Capture not marked as processing, cannot mark as failed."
+                    )
+                if (
+                    request.user.is_staff is False
+                    and capture.claimed_by != request.user
+                ):
+                    raise ConflictException(
+                        "Capture claimed by another user, cannot mark as failed."
+                    )
+                capture.status = StatusChoices.FAILED
+                failure_reason = str(request.data.get("failure_reason", ""))  # pyright: ignore[reportAttributeAccessIssue]
+                capture.failure_reason = failure_reason[
+                    :CAPTURE_FAILURE_REASON_MAX_LENGTH
+                ]
+                capture.save(update_fields=["status", "failure_reason"])
+            except Capture.DoesNotExist:
+                if not Capture.objects.filter(pk=pk).exists():
+                    raise NotFound("Capture not found.")
+                raise ConflictException(
+                    "Capture is locked by another process, cannot mark as failed."
+                )
+        return Response(self.get_serializer(capture).data, status=status.HTTP_200_OK)
+
+
+class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = Prediction.objects.select_related(
+        "capture", "dish", "dish__station", "capture__device", "capture__uploaded_by"
+    ).prefetch_related(
+        "capture__predictions",
+        "capture__predictions__dish",
+        "capture__predictions__dish__station",
+    )
     serializer_class = PredictionSerializer
+
+    def get_permissions(self) -> list:
+        """Override the default permissions to allow workers to create predictions.
+
+        Returns:
+            list: A list of permission instances.
+        """
+        if self.action == "create":
+            return [IsWorkerOrAdmin()]
+        return [IsAdminUser()]
+
+    def perform_create(self, serializer: PredictionSerializer) -> None:
+        """Override the default perform_create method to ensure that the associated capture is marked as pending or processing before creating a prediction.
+
+        Args:
+            serializer (PredictionSerializer): The serializer instance used for creating the Prediction.
+
+        Raises:
+            ConflictException: If the associated capture is not marked as pending or processing.
+        """
+        with transaction.atomic():
+            try:
+                capture = Capture.objects.select_for_update(skip_locked=True).get(
+                    pk=serializer.validated_data["capture"].pk  # type: ignore
+                )
+                if capture.status != StatusChoices.PROCESSING:
+                    raise ConflictException(
+                        "Capture not marked as processing, cannot create prediction."
+                    )
+                if (
+                    not self.request.user.is_staff
+                    and capture.claimed_by != self.request.user
+                ):
+                    raise ConflictException(
+                        "Capture claimed by another user, cannot create prediction."
+                    )
+                capture.status = StatusChoices.DONE
+                capture.save(update_fields=["status"])
+                serializer.validated_data["capture"] = capture  # type: ignore
+                serializer.save()
+            except Capture.DoesNotExist:
+                raise ConflictException(
+                    "Capture is locked by another process, cannot create prediction."
+                )
 
 
 class LabelViewSet(viewsets.ModelViewSet):
@@ -234,8 +414,39 @@ class OverproductionLogViewSet(viewsets.ModelViewSet):
 
 
 WASTE_KG = ExpressionWrapper(
-    F("waste_bucket") * F("dish__portion") / 100000.0, output_field=FloatField()
+    F("final_waste_bucket") * F("final_portion") / 100000.0,
+    output_field=FloatField(),
 )
+
+
+def final_results() -> QuerySet:
+    """Build one row per capture: its latest prediction, overridden by its latest human label if one exists.
+
+    Returns:
+        QuerySet: Predictions annotated with final_dish_id, final_waste_bucket, final_portion and final_dish_name.
+    """
+    latest_prediction = Prediction.objects.filter(capture=OuterRef("capture")).order_by(
+        "-created_at", "-id"
+    )
+    latest_label = Label.objects.filter(capture=OuterRef("capture")).order_by("-id")
+    final_dish = Dish.objects.filter(pk=OuterRef("final_dish_id"))
+    return (
+        Prediction.objects.filter(pk=Subquery(latest_prediction.values("pk")[:1]))
+        .annotate(
+            final_dish_id=Coalesce(
+                Subquery(latest_label.values("dish")[:1]),
+                F("dish_id"),
+                output_field=IntegerField(),
+            ),
+            final_waste_bucket=Coalesce(
+                Subquery(latest_label.values("waste_bucket")[:1]), F("waste_bucket")
+            ),
+        )
+        .annotate(
+            final_portion=Subquery(final_dish.values("portion")[:1]),
+            final_dish_name=Subquery(final_dish.values("name")[:1]),
+        )
+    )
 
 
 def waste_metrics() -> dict[str, Aggregate]:
@@ -246,7 +457,7 @@ def waste_metrics() -> dict[str, Aggregate]:
     """
     return {
         "bowl_count": Count("id"),
-        "average_waste_percent": Avg("waste_bucket"),
+        "average_waste_percent": Avg("final_waste_bucket"),
         "total_waste_kg": Sum(WASTE_KG),
         "average_waste_kg": Avg(WASTE_KG),
     }
@@ -273,31 +484,64 @@ def clean(row: dict) -> dict:
 
 class StatsView(APIView):
     def get(self, request: Request) -> Response:
-        """Get the statistics for predictions based on the provided filters.
+        """Get the statistics for predictions based on the provided filters, counting each capture once with its latest prediction or, if labeled, its latest human label.
 
         Args:
             request (Request): The incoming request object containing query parameters for filtering predictions.
 
         Returns:
-            Response: A Response object containing the aggregated statistics and per-dish statistics based on the filtered predictions.
+            Response: A Response object containing the aggregated statistics, per-dish statistics, and daily trends (overall and per dish) based on the filtered predictions.
         """
         filterset = PredictionStatsFilter(
-            request.query_params, queryset=Prediction.objects.all()
+            request.query_params, queryset=final_results()
         )
         if not filterset.is_valid():
             return Response(filterset.errors, status=status.HTTP_400_BAD_REQUEST)
 
         predictions = filterset.qs
+
         per_dish = (
-            predictions.values("dish_id", dish_name=F("dish__name"))
+            predictions.values("final_dish_id", "final_dish_name")
             .annotate(**waste_metrics())
             .order_by("-total_waste_kg")
         )
+
+        per_dish_waste_bucket_distribution = predictions.values(
+            "final_dish_id", "final_waste_bucket"
+        )
+        waste_bucket_distribution = defaultdict(lambda: defaultdict(int))
+        for row in per_dish_waste_bucket_distribution:
+            waste_bucket_distribution[row["final_dish_id"]][
+                row["final_waste_bucket"]
+            ] += 1
+
+        by_date = predictions.annotate(date=TruncDate("capture__captured_at"))
+        daily = by_date.values("date").annotate(**waste_metrics()).order_by("date")
+        per_dish_daily = (
+            by_date.values("final_dish_id", "date")
+            .annotate(**waste_metrics())
+            .order_by("date")
+        )
+        dish_trends = defaultdict(list)
+        for row in per_dish_daily:
+            dish_trends[row.pop("final_dish_id")].append(clean(row))
+
         return Response(
             {
                 **clean(predictions.aggregate(**waste_metrics())),
-                "dishes": [clean(row) for row in per_dish],
-            }
+                "daily": [clean(row) for row in daily],
+                "dishes": [
+                    {
+                        "dish_id": (dish_id := row.pop("final_dish_id")),
+                        "dish_name": row.pop("final_dish_name"),
+                        **clean(row),
+                        "daily": dish_trends[dish_id],
+                        "waste_bucket_distribution": waste_bucket_distribution[dish_id],
+                    }
+                    for row in per_dish
+                ],
+            },
+            status=status.HTTP_200_OK,
         )
 
 

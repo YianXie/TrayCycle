@@ -2,6 +2,9 @@
   "python.terminal.useEnvFile": true,
   "cSpell.words": [
     "corsheaders",
+    "dotenv",
+    "filterset",
+    "menuday",
     "nostatic",
     "runserver",
     "toolpad",
@@ -10,7 +13,6 @@
     "viewsets"
   ],
   "python-envs.defaultEnvManager": "ms-python.python:system",
-
   "actionButtons": {
     "commands": [
       {

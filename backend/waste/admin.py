@@ -1,5 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db import DatabaseError
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
+from .constants import StatusChoices
 from .models import (
     Capture,
     Device,
@@ -43,7 +47,38 @@ class CaptureModelAdmin(admin.ModelAdmin):
         "source",
         "status",
     )
-    list_filters = ("device", "uploaded_by", "source", "status")
+    list_filter = ("device", "uploaded_by", "source", "status")
+    actions = ("mark_as_pending",)
+
+    @admin.action(description="Mark selected captures as pending")
+    def mark_as_pending(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """Admin action to mark selected captures as pending, ignoring those that are already done.
+
+        Args:
+            request: The current admin request.
+            queryset: The entries the admin selected.
+        """
+        try:
+            queryset = queryset.exclude(status=StatusChoices.DONE)
+            updated: int = queryset.update(
+                claimed_at=None,
+                claimed_by=None,
+                attempts=0,
+                status=StatusChoices.PENDING,
+                failure_reason=None,
+            )
+        except DatabaseError as e:
+            self.message_user(
+                request,
+                f"An error occurred while updating captures: {e}",
+                level=messages.ERROR,
+            )
+            return
+        self.message_user(
+            request,
+            f"Successfully marked {updated} capture(s) as pending.",
+            level=messages.SUCCESS,
+        )
 
 
 class PredictionModelAdmin(admin.ModelAdmin):
