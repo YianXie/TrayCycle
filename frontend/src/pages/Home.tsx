@@ -10,16 +10,17 @@
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+// import Typography from "@mui/material/Typography";
 import { createTheme } from "@mui/material/styles";
 import { PageContainer } from "@toolpad/core";
 import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import React from "react";
 
-// import AboutUs from "./AboutUs";
+import usePageTitle from "../UsePageTitle";
+import AboutUs from "./AboutUs";
 import Dashboard from "./Dashboard";
-import Upload from "./Upload";
+// import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
 
 // Sidebar navigation stuff
@@ -66,7 +67,11 @@ const theme = createTheme({
 export default function Home() {
     // State track active navigation menu item
     const [pathname, setPathname] = React.useState("/dashboard");
-
+    const pages: Record<string, string> = {
+        "/dashboard": "Dashboard",
+        "/about-us": "About Us",
+        "/upload": "Upload",
+    };
     const router = React.useMemo(() => {
         return {
             pathname,
@@ -74,7 +79,7 @@ export default function Home() {
             navigate: (path: string | URL) => setPathname(String(path)),
         };
     }, [pathname]);
-
+    usePageTitle(pages[pathname] ?? "Home");
     return (
         <AppProvider
             navigation={NAVIGATION}
@@ -101,16 +106,10 @@ export default function Home() {
                         gap: 2,
                     }}
                 >
-                    <Typography variant="h4">
-                        Viewing:{" "}
-                        {pathname.replace("/", "").charAt(0).toUpperCase() +
-                            pathname.replace("/", "").slice(1)}{" "}
-                        Page
-                    </Typography>
                     <PageContainer>
                         {pathname === "/dashboard" && <Dashboard />}
-                        {/* {pathname === "/about-us" && <AboutUs />} */}
-                        {pathname === "/upload" && <Upload />}
+                        {pathname === "/about-us" && <AboutUs />}
+                        {/* {pathname === "/upload" && <Upload />} */}
                     </PageContainer>
                 </Box>
             </DashboardLayout>

@@ -1,19 +1,18 @@
 {
   "python.terminal.useEnvFile": true,
   "cSpell.words": [
-    "authtoken",
-    "collectstatic",
     "corsheaders",
     "dotenv",
     "filterset",
     "menuday",
     "nostatic",
-    "overproductionlog",
-    "overproductionlogs",
     "runserver",
+    "toolpad",
+    "traycycle",
     "venv",
     "viewsets"
   ],
+  "python-envs.defaultEnvManager": "ms-python.python:system",
   "actionButtons": {
     "commands": [
       {
