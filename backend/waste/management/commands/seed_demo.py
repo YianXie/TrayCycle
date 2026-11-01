@@ -1,9 +1,11 @@
 from io import BytesIO
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.db import transaction
+from django.core.management.color import no_style
+from django.db import connection, transaction
 from PIL import Image
 
 from waste.constants import WORKER_GROUP_NAME, SourceChoices, StatusChoices
@@ -88,256 +90,300 @@ class Command(BaseCommand):
                     Station.objects.all().delete()
                     User.objects.all().delete()
 
+        # Reset the database sequences for the relevant models to ensure primary keys start from 1
+        statements = connection.ops.sequence_reset_sql(
+            no_style(),
+            [
+                User,
+                Station,
+                Dish,
+                MenuDay,
+                Device,
+                Capture,
+                Prediction,
+                Label,
+                OverproductionLog,
+            ],
+        )
+        if statements:
+            with connection.cursor() as cursor:
+                for statement in statements:
+                    cursor.execute(statement)
+                self.stdout.write(
+                    self.style.SUCCESS("Database sequences reset successfully.")
+                )
+        else:
+            self.stdout.write(self.style.WARNING("No database sequences to reset."))
+
         # Define the demo data
         users = [
             {
-                "id": 1,
                 "username": "Admin 1",
-                "password": "pw",
+                "password": settings.ADMIN_1_PASSWORD,
                 "is_staff": True,
             },
             {
-                "id": 2,
                 "username": "Admin 2",
-                "password": "pw",
+                "password": settings.ADMIN_2_PASSWORD,
                 "is_staff": True,
             },
             {
-                "id": 3,
                 "username": "inference-worker-1",
-                "password": "pw",
                 "is_worker": True,
             },
             {
-                "id": 4,
                 "username": "inference-worker-2",
-                "password": "pw",
                 "is_worker": True,
             },
         ]
         stations = [
             {
-                "id": 1,
                 "name": "Asian cuisine",
                 "is_customizable": True,
             },
             {
-                "id": 2,
                 "name": "Salad bar",
                 "is_customizable": True,
             },
             {
-                "id": 3,
                 "name": "Chicken rice station",
                 "is_customizable": False,
             },
         ]
         dishes = [
             {
-                "id": 1,
                 "name": "Chicken Teriyaki",
-                "station_id": 1,
+                "station": "Asian cuisine",
                 "portion": 250,
             },
             {
-                "id": 2,
                 "name": "Beef Bulgogi",
-                "station_id": 1,
+                "station": "Asian cuisine",
                 "portion": 350,
             },
             {
-                "id": 3,
                 "name": "Sweet and sour pork",
-                "station_id": 1,
+                "station": "Asian cuisine",
                 "portion": 300,
             },
             {
-                "id": 4,
                 "name": "Caesar Salad",
-                "station_id": 2,
+                "station": "Salad bar",
                 "portion": 200,
             },
             {
-                "id": 5,
                 "name": "Greek Salad",
-                "station_id": 2,
+                "station": "Salad bar",
                 "portion": 250,
             },
             {
-                "id": 6,
                 "name": "Hainanese Chicken Rice",
-                "station_id": 3,
+                "station": "Chicken rice station",
                 "portion": 400,
             },
         ]
         menu_days = [
             {
                 "date": "2025-12-01",
-                "dishes": [1, 4, 6],
+                "dishes": [
+                    "Chicken Teriyaki",
+                    "Caesar Salad",
+                    "Hainanese Chicken Rice",
+                ],
             },
             {
                 "date": "2025-12-02",
-                "dishes": [2, 5, 6],
+                "dishes": [
+                    "Beef Bulgogi",
+                    "Greek Salad",
+                    "Hainanese Chicken Rice",
+                ],
             },
             {
                 "date": "2025-12-03",
-                "dishes": [3, 4, 6],
+                "dishes": [
+                    "Sweet and sour pork",
+                    "Caesar Salad",
+                    "Hainanese Chicken Rice",
+                ],
             },
             {
                 "date": "2025-12-04",
-                "dishes": [1, 5, 6],
+                "dishes": [
+                    "Chicken Teriyaki",
+                    "Greek Salad",
+                    "Hainanese Chicken Rice",
+                ],
             },
             {
                 "date": "2025-12-05",
-                "dishes": [2, 4, 6],
+                "dishes": [
+                    "Beef Bulgogi",
+                    "Caesar Salad",
+                    "Hainanese Chicken Rice",
+                ],
             },
         ]
         devices = [
             {
-                "id": 1,
                 "name": "Cam 1",
                 "location": "Cafe A",
             },
             {
-                "id": 2,
                 "name": "Cam 2",
                 "location": "Cafe B",
             },
         ]
-        captures = [
-            {
-                "id": 1,
+        # Captures have no natural unique field, so they are keyed by a reference name for predictions
+        captures = {
+            "capture1": {
                 "image": self.make_image("capture1.png"),
                 "captured_at": "2025-12-01T12:00:00Z",
-                "device_id": 1,
-                "uploaded_by_id": None,
+                "device": "Cam 1",
+                "uploaded_by": None,
                 "claimed_at": "2025-12-01T12:01:00Z",
-                "claimed_by_id": 3,
+                "claimed_by": "inference-worker-1",
                 "attempts": 1,
                 "source": SourceChoices.CAMERA,
                 "status": StatusChoices.DONE,
             },
-            {
-                "id": 2,
+            "capture2": {
                 "image": self.make_image("capture2.png"),
                 "captured_at": "2025-12-02T11:29:43Z",
-                "device_id": 2,
-                "uploaded_by_id": None,
+                "device": "Cam 2",
+                "uploaded_by": None,
                 "claimed_at": "2025-12-02T11:29:47Z",
-                "claimed_by_id": 4,
+                "claimed_by": "inference-worker-2",
                 "attempts": 2,
                 "source": SourceChoices.CAMERA,
                 "status": StatusChoices.DONE,
             },
-            {
-                "id": 3,
+            "capture3": {
                 "image": self.make_image("capture3.png"),
                 "captured_at": "2025-12-03T11:42:03Z",
-                "device_id": None,
-                "uploaded_by_id": 1,
+                "device": None,
+                "uploaded_by": "Admin 1",
                 "claimed_at": "2025-12-03T11:44:02Z",
-                "claimed_by_id": 3,
+                "claimed_by": "inference-worker-1",
                 "attempts": 1,
                 "source": SourceChoices.UPLOAD,
                 "status": StatusChoices.DONE,
             },
-            {
-                "id": 4,
+            "capture4": {
                 "image": self.make_image("capture4.png"),
                 "captured_at": "2025-12-04T12:01:59Z",
-                "device_id": None,
-                "uploaded_by_id": 2,
+                "device": None,
+                "uploaded_by": "Admin 2",
                 "claimed_at": "2025-12-04T12:02:12Z",
-                "claimed_by_id": 3,
+                "claimed_by": "inference-worker-1",
                 "attempts": 3,
                 "source": SourceChoices.UPLOAD,
                 "status": StatusChoices.FAILED,
             },
-            {
-                "id": 5,
+            "capture5": {
                 "image": self.make_image("capture5.png"),
                 "captured_at": "2025-12-05T12:03:22Z",
-                "device_id": None,
-                "uploaded_by_id": 1,
+                "device": None,
+                "uploaded_by": "Admin 1",
                 "claimed_at": "2025-12-05T12:03:24Z",
-                "claimed_by_id": 4,
+                "claimed_by": "inference-worker-2",
                 "attempts": 1,
                 "source": SourceChoices.UPLOAD,
                 "status": StatusChoices.DONE,
             },
-        ]
+        }
         predictions = [
             {
-                "id": 1,
-                "capture_id": 1,
-                "dish_id": 1,
+                "capture": "capture1",
+                "dish": "Chicken Teriyaki",
                 "waste_bucket": 25,
                 "confidence": 0.85,
                 "model_version": "1.0",
             },
             {
-                "id": 2,
-                "capture_id": 2,
-                "dish_id": 4,
+                "capture": "capture2",
+                "dish": "Caesar Salad",
                 "waste_bucket": 0,
                 "confidence": 0.7,
                 "model_version": "1.0",
             },
             {
-                "id": 3,
-                "capture_id": 3,
-                "dish_id": 2,
+                "capture": "capture3",
+                "dish": "Beef Bulgogi",
                 "waste_bucket": 75,
                 "confidence": 0.35,
                 "model_version": "1.0",
             },
             {
-                "id": 4,
-                "capture_id": 4,
-                "dish_id": 6,
+                "capture": "capture4",
+                "dish": "Hainanese Chicken Rice",
                 "waste_bucket": 50,
                 "confidence": 0.97,
                 "model_version": "1.0",
             },
             {
-                "id": 5,
-                "capture_id": 5,
-                "dish_id": 3,
+                "capture": "capture5",
+                "dish": "Sweet and sour pork",
                 "waste_bucket": 25,
                 "confidence": 0.9,
                 "model_version": "1.0",
             },
         ]
 
-        # Create the objects in the database
+        # Create the objects in the database, letting the database assign primary keys.
+        # Related objects are looked up by name from the objects created earlier.
+        user_objs = {}
         for user_data in users:
             if user_data.get("is_worker"):
                 worker = User.objects.create_user(
-                    id=user_data["id"],
                     username=user_data["username"],
-                    password=user_data["password"],
                 )
+                worker.set_unusable_password()
                 worker.groups.add(Group.objects.get(name=WORKER_GROUP_NAME))
+                user_objs[worker.username] = worker
             else:
-                User.objects.create_user(**user_data)
+                user = User.objects.create_user(**user_data)
+                user_objs[user.username] = user
 
+        station_objs = {}
         for station_data in stations:
-            Station.objects.create(**station_data)
+            station = Station.objects.create(**station_data)
+            station_objs[station.name] = station
 
+        dish_objs = {}
         for dish_data in dishes:
-            Dish.objects.create(**dish_data)
+            dish = Dish.objects.create(
+                **{**dish_data, "station": station_objs[dish_data["station"]]}
+            )
+            dish_objs[dish.name] = dish
 
         for menu_day_data in menu_days:
             menu_day = MenuDay.objects.create(date=menu_day_data["date"])
-            menu_day.dishes.set(menu_day_data["dishes"])
+            menu_day.dishes.set([dish_objs[name] for name in menu_day_data["dishes"]])
 
+        device_objs = {}
         for device_data in devices:
-            Device.objects.create(**device_data)
+            device = Device.objects.create(**device_data)
+            device_objs[device.name] = device
 
-        for capture_data in captures:
-            Capture.objects.create(**capture_data)
+        capture_objs = {}
+        for ref, capture_data in captures.items():
+            capture_objs[ref] = Capture.objects.create(
+                **{
+                    **capture_data,
+                    "device": device_objs.get(capture_data["device"]),
+                    "uploaded_by": user_objs.get(capture_data["uploaded_by"]),
+                    "claimed_by": user_objs.get(capture_data["claimed_by"]),
+                }
+            )
 
         for prediction_data in predictions:
-            Prediction.objects.create(**prediction_data)
+            Prediction.objects.create(
+                **{
+                    **prediction_data,
+                    "capture": capture_objs[prediction_data["capture"]],
+                    "dish": dish_objs[prediction_data["dish"]],
+                }
+            )
 
         self.stdout.write(self.style.SUCCESS("Demo data created successfully."))
