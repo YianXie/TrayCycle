@@ -37,6 +37,8 @@ jobs:
         working-directory: ./backend
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ADMIN_1_PASSWORD: ${{ secrets.ADMIN_1_PASSWORD }}
+      ADMIN_2_PASSWORD: ${{ secrets.ADMIN_2_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
