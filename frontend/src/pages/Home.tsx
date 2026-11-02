@@ -16,12 +16,9 @@ import { PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
-import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import usePageTitle from "../UsePageTitle";
-import AboutUs from "./AboutUs";
-import Dashboard from "./Dashboard";
 // import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
 

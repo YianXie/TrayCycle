@@ -10,8 +10,8 @@ export default function NotFound() {
 
             <Typography>The page you requested does not exist.</Typography>
 
-            <Button component={RouterLink} to="/dashboard" variant="contained">
-                Back to dashboard
+            <Button component={RouterLink} to="/" variant="contained">
+                Back to home
             </Button>
         </Stack>
     );
