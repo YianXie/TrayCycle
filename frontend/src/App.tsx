@@ -10,7 +10,6 @@ import AboutUs from "./pages/AboutUs";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
-import Upload from "./pages/Upload";
 
 /**
  * Main App component that sets up routing and layout
