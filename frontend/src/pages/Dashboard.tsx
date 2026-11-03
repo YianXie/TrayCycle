@@ -3,7 +3,7 @@
  *
  * Displays food wasted today, trends and other statistical information that the api returns
  */
-import { Box, Grid, Typography } from "@mui/material";
+import { Box, Button, Grid, Typography } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
 
@@ -24,11 +24,47 @@ const kpis = (stats: Stats) => [
     },
 ];
 type Status = "loading" | "success" | "error";
+const shortDay = (iso: string) => iso.slice(5);
+const MONTHS = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+];
+
+const dayLabel = (iso: string) => {
+    const [y, m, d] = iso.split("-");
+    return `${Number(d)} ${MONTHS[Number(m) - 1]} ${y}`;
+};
+
+function BooButton() {
+    const [booed, setBooed] = useState(false);
+
+    return (
+        <Button
+            variant={booed ? "contained" : "outlined"}
+            color={booed ? "error" : "inherit"}
+            onClick={() => setBooed(!booed)}
+            startIcon={booed ? "🍅" : "👎"}
+            size="small"
+            sx={{ borderRadius: 20, textTransform: "none" }} // Rounded pill shape, clean text
+        >
+            {booed ? "Booed!" : "Boo"}
+        </Button>
+    );
+}
 
 export default function Dashboard() {
     const [status, setStatus] = useState<Status>("loading");
     const [stats, setStats] = useState<Stats | null>(null);
-    const shortDay = (iso: string) => iso.slice(5);
     useEffect(() => {
         let ignore = false;
         getStats({})
@@ -69,9 +105,12 @@ export default function Dashboard() {
         <div>
             <Box component="section">
                 <Typography variant="h5" component="h2" gutterBottom>
+                    Waste at a glance
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
                     {firstDay && lastDay
-                        ? `${shortDay(firstDay)} - ${shortDay(lastDay)}`
-                        : "Waste by day"}
+                        ? `${dayLabel(firstDay)} - ${dayLabel(lastDay)}`
+                        : "All captures"}
                 </Typography>
                 <Grid container spacing={3}>
                     {kpis(stats).map((k) => (
@@ -82,7 +121,7 @@ export default function Dashboard() {
                 </Grid>
             </Box>
             <Box component="section" sx={{ mt: 4 }}>
-                <Typography variant="h5" component="h2" gutterBottom>
+                <Typography variant="h5" component="h2">
                     Waste per day
                 </Typography>
                 <LineChart
@@ -104,6 +143,26 @@ export default function Dashboard() {
                     ]}
                     yAxis={[{ label: "kg" }]}
                 />
+            </Box>
+            <Box component="section" sx={{ mt: 4 }}>
+                <Typography variant="h5" component="h2" gutterBottom>
+                    Biggest food offenders
+                </Typography>
+                <Grid container spacing={3}>
+                    {stats.dishes.map((dish) => (
+                        <Grid
+                            key={dish.dish_id}
+                            size={{ xs: 12, sm: 6, md: 4 }}
+                        >
+                            <KpiCard
+                                value={`${dish.total_waste_kg.toFixed(2)} kg`}
+                                label={dish.dish_name}
+                                hint={`${dish.bowl_count} bowls · avg ${Math.round(dish.average_waste_percent)}% level`}
+                                action={<BooButton />}
+                            />
+                        </Grid>
+                    ))}
+                </Grid>
             </Box>
         </div>
     );

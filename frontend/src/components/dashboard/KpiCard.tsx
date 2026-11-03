@@ -1,12 +1,14 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
+import React from "react";
 
 export type KpiCardProps = {
     value: string;
     label: string;
     hint?: string;
+    action?: React.ReactNode;
 };
 
-function KpiCard({ value, label, hint }: KpiCardProps) {
+function KpiCard({ value, label, hint, action }: KpiCardProps) {
     return (
         <Card
             variant="outlined"
@@ -17,20 +19,12 @@ function KpiCard({ value, label, hint }: KpiCardProps) {
                 overflow: "hidden",
                 borderColor: "divider",
                 "&:hover": {
-                    boardColor: "primary.main",
-                    boxShadow: 3,
+                    borderColor: "primary.main",
+                    boxShadow: 1,
                 },
             }}
         >
-            <Box
-                sx={{
-                    flexGrow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    height: 3,
-                    bgcolor: "primary.main",
-                }}
-            />
+            <Box sx={{ height: 3, flexShrink: 0, bgcolor: "primary.main" }} />
             <CardContent
                 sx={{
                     flexGrow: 1,
@@ -59,6 +53,7 @@ function KpiCard({ value, label, hint }: KpiCardProps) {
                         {hint}
                     </Typography>
                 )}
+                {action}
             </CardContent>
         </Card>
     );
