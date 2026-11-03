@@ -144,6 +144,12 @@ REST_FRAMEWORK = {
 }
 
 
+# Management command configuration
+
+ADMIN_1_PASSWORD = env("ADMIN_1_PASSWORD")
+ADMIN_2_PASSWORD = env("ADMIN_2_PASSWORD")
+
+
 # Storage configuration
 
 MEDIA_URL = "media/"
