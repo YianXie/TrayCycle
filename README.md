@@ -1,8 +1,41 @@
 # TrayCycle
 
-A camera-based plate-waste tracker for the SAS cafeteria, presented measured waste in kg per dish plus a forecast the kitchen can act on.
+> By team TriCycle (Ian Xie, Gordon Ji, Aryan Mahajan), for 2026-2027 SAS CSHS Hackathon.
 
-## Start the development server
+A camera-based food-waste tracker for the SAS cafeteria, presented measured waste in kg per dish plus a dashboard the kitchen can act on.
+
+Live site: [traycycle.org](https://traycycle.org)
+
+## Tech stack
+
+### Frontend
+
+- React — Framework
+- MUI — UI library
+- Vite — Build tool + dev server
+- Axios — Handles API requests
+- React Router — Client-side routing
+
+### Backend
+
+- Django — Base framework
+- Django Rest Framework — RESTful APIs, viewsets, and serializers
+- uv — Python dependencies management
+- django-filter — Create dynamic filter rules in URL query parameters
+
+### Database & Media Storage
+
+#### Development
+
+- SQLite3 — Simple database
+- Local `MEDIA_ROOT` — Local media file storage
+
+#### Production
+
+- PostgreSQL — Object-relational database management system
+- Cloudflare R2 — Near free, unstructured data storage system
+
+## Development
 
 ### Frontend
 
@@ -17,10 +50,13 @@ npm run dev
 ```bash
 cd backend
 uv sync  # sync the virtual environment
-source .venv/bin/activate  # activate the virtual environment
-python manage.py migrate  # migrate database
-python manage.py runserver
+uv run python manage.py migrate  # migrate database
+uv run python manage.py runserver
 ```
+
+### Database & Media Storage
+
+You do not need a separate database or media storage for local development. The built-in SQLite3 in Django will work fine, and media files will be stored in your `MEDIA_ROOT`.
 
 ## GitHub Actions
 
@@ -46,3 +82,7 @@ The frontend, backend, and PostgreSQL database are deployed on [Render](https://
 - Backend: a 0.5 CPU 512 MB RAM web service
 - Database: 0.1 CPU 256 MB 10GB PostgreSQL service
 - Media storage: Cloudflare R2 object storage service
+
+## License
+
+[MIT](LICENSE)
