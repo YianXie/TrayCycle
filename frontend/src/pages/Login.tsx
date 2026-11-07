@@ -8,19 +8,22 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import type { SubmitEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
     const { token, login } = useAuth();
-    const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.location || "/dashboard";
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    if (token) return <Navigate to="/dashboard" replace />;
+    // Once a token exists (already logged in, or just logged in), go back to
+    // where the user came from.
+    if (token) return <Navigate to={from} replace />;
 
     const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -28,7 +31,6 @@ export default function Login() {
         setSubmitting(true);
         try {
             await login(username, password);
-            navigate("/dashboard", { replace: true });
         } catch {
             setError("Invalid username or password.");
         } finally {

@@ -14,8 +14,9 @@ import { PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import { useAuth } from "../context/AuthContext";
 import usePageTitle from "../hooks/usePageTitle";
 import TrayCycleLogo from "/logo.png";
 
@@ -56,8 +57,9 @@ const theme = createTheme({
 
 // The thing that loads the webpage, uses Toolpad
 export default function Home() {
-    // State track active navigation menu item
     const { pathname } = useLocation();
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const pages: Record<string, string> = {
         "/dashboard": "Dashboard",
         "/about-us": "About Us",
@@ -80,6 +82,18 @@ export default function Home() {
                     />
                 ),
                 title: "TrayCycle",
+            }}
+            authentication={{
+                signIn: () => navigate("/login"),
+                signOut: () => navigate("/logout"),
+            }}
+            session={{
+                user: {
+                    id: user?.id ?? null,
+                    name: user?.username ?? null,
+                    image: null,
+                    email: user?.email ?? null,
+                },
             }}
         >
             <DashboardLayout>

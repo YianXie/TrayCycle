@@ -1,17 +1,22 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const { token, loading } = useAuth();
+    const location = useLocation();
 
     if (loading) {
-        return <div>Loading authentication status...</div>; // Prevents flashing white screens
+        return <div>Loading authentication status...</div>;
     }
 
     // If no token exists, redirect the user to the login screen
-    return token ? children : <Navigate to="/login" replace />;
+    return token ? (
+        children
+    ) : (
+        <Navigate to="/login" state={{ location: location.pathname }} replace />
+    );
 };
 
 export default ProtectedRoute;

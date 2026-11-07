@@ -22,7 +22,7 @@ from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -495,6 +495,8 @@ def clean(row: dict) -> dict:
 
 
 class StatsView(APIView):
+    permission_classes = [IsAuthenticated]  # noqa: RUF012
+
     def get(self, request: Request) -> Response:
         """Get the statistics for predictions based on the provided filters, counting each capture once with its latest prediction or, if labeled, its latest human label.
 

@@ -7,7 +7,6 @@ import Header from "./Header";
  *
  * Wraps all page content with a header and main content area.
  * Uses React Router's Outlet to render child route components.
- * Provides consistent layout across all pages in the application.
  */
 function Layout() {
     return (

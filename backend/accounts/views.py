@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,8 +9,9 @@ from rest_framework.views import APIView
 from .serializers import LoginSerializer, UserProfileSerializer
 
 
-# Create your views here.
 class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]  # noqa: RUF012
+
     def get(self, request: Request) -> Response:
         """Get the profile of the currently authenticated user.
 
