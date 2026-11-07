@@ -16,7 +16,7 @@ import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import { Outlet, useLocation } from "react-router-dom";
 
-import usePageTitle from "../UsePageTitle";
+import usePageTitle from "../hooks/usePageTitle";
 import TrayCycleLogo from "/logo.png";
 
 // Sidebar navigation stuff
