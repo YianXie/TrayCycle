@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { getStats } from "../api/stats";
 import DistributionChart from "../components/dashboard/DistributionChart";
 import KpiCard from "../components/dashboard/KpiCard";
-import type { DishRow, Stats } from "../types/stats";
+import type { Stats } from "../types/stats";
 
 const kpis = (stats: Stats) => [
     { label: "Bowls scanned", value: String(stats.bowl_count) },
