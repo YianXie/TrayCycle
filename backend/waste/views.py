@@ -64,6 +64,18 @@ from .serializers import (
 )
 
 
+class HealthCheckView(APIView):
+    permission_classes = []  # noqa: RUF012
+
+    def get(self, request: Request) -> Response:
+        """Health check endpoint to verify that the API is running.
+
+        Args:
+            request (Request): The incoming request object.
+        """
+        return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
     serializer_class = StationSerializer

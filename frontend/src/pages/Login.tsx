@@ -1,0 +1,94 @@
+import {
+    Alert,
+    Box,
+    Button,
+    Paper,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { useState } from "react";
+import type { SubmitEvent } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../context/AuthContext";
+
+export default function Login() {
+    const { token, login } = useAuth();
+    const navigate = useNavigate();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    if (token) return <Navigate to="/dashboard" replace />;
+
+    const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError("");
+        setSubmitting(true);
+        try {
+            await login(username, password);
+            navigate("/dashboard", { replace: true });
+        } catch {
+            setError("Invalid username or password.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Box
+            sx={{
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 2,
+            }}
+        >
+            <Paper
+                component="form"
+                onSubmit={handleSubmit}
+                sx={{ p: 4, width: "100%", maxWidth: 360 }}
+            >
+                <Typography variant="h5" gutterBottom>
+                    Log in
+                </Typography>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
+                <TextField
+                    label="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                    autoFocus
+                    required
+                    fullWidth
+                    margin="normal"
+                />
+                <TextField
+                    label="Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                    fullWidth
+                    margin="normal"
+                />
+                <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    disabled={submitting}
+                    sx={{ mt: 2 }}
+                >
+                    {submitting ? "Logging in..." : "Log in"}
+                </Button>
+            </Paper>
+        </Box>
+    );
+}

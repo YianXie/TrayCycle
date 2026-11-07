@@ -68,6 +68,7 @@ function BooButton() {
 export default function Dashboard() {
     const [status, setStatus] = useState<Status>("loading");
     const [stats, setStats] = useState<Stats | null>(null);
+
     useEffect(() => {
         let ignore = false;
         getStats({})

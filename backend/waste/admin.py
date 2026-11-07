@@ -13,7 +13,6 @@ from .models import (
     OverproductionLog,
     Prediction,
     Station,
-    User,
 )
 
 
@@ -96,7 +95,6 @@ class OverproductionLogModelAdmin(admin.ModelAdmin):
     list_filter = ("date", "dish", "entered_by")
 
 
-admin.site.register(User, admin.ModelAdmin)
 admin.site.register(Dish, DishModelAdmin)
 admin.site.register(Station, StationModelAdmin)
 admin.site.register(MenuDay, MenuDayModelAdmin)

@@ -74,6 +74,7 @@ export default function Home() {
     };
     const title = pages[pathname] ?? "Page not found";
     usePageTitle(pages[pathname] ?? "Page not found");
+
     return (
         <ReactRouterAppProvider
             navigation={NAVIGATION}

@@ -1,7 +1,7 @@
 import api from "../api";
 import type { Stats, StatsParams } from "../types/stats";
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 function buildMockStats(): Stats {
     return {
@@ -267,6 +267,6 @@ function buildMockStats(): Stats {
 
 export async function getStats(params: StatsParams): Promise<Stats> {
     if (USE_MOCK) return buildMockStats();
-    const { data } = await api.get<Stats>("/api/stats", { params });
+    const { data } = await api.get<Stats>("/api/wastes/stats", { params });
     return data;
 }

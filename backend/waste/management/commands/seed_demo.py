@@ -8,6 +8,7 @@ from django.core.management.color import no_style
 from django.db import connection, transaction
 from PIL import Image
 
+from accounts.models import User
 from waste.constants import WORKER_GROUP_NAME, SourceChoices, StatusChoices
 from waste.models import (
     Capture,
@@ -18,7 +19,6 @@ from waste.models import (
     OverproductionLog,
     Prediction,
     Station,
-    User,
 )
 
 

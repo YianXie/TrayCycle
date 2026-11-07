@@ -14,6 +14,7 @@ router.register(r"labels", views.LabelViewSet)
 router.register(r"overproduction", views.OverproductionLogViewSet)
 
 urlpatterns = [
+    path(r"health", views.HealthCheckView.as_view(), name="health"),
     path(r"stats", views.StatsView.as_view(), name="stats"),
     path(r"forecast", views.ForecastView.as_view(), name="forecast"),
     path("", include(router.urls)),

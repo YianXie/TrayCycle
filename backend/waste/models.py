@@ -1,9 +1,10 @@
 import secrets
 
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+
+from accounts.models import User
 
 from .constants import (
     CAPTURE_FAILURE_REASON_MAX_LENGTH,
@@ -11,10 +12,6 @@ from .constants import (
     StatusChoices,
     WasteBucketChoices,
 )
-
-
-class User(AbstractUser):
-    """A custom user model that extends the default Django AbstractUser model."""
 
 
 class Station(models.Model):

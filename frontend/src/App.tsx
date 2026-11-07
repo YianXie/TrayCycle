@@ -9,6 +9,7 @@ import Layout from "./components/layout/Layout";
 import AboutUs from "./pages/AboutUs";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 /**
@@ -20,6 +21,7 @@ export default function App() {
     return (
         <Router>
             <Routes>
+                <Route path="login" element={<Login />} />
                 <Route element={<Layout />}>
                     <Route element={<Home />}>
                         <Route
