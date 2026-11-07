@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
-import "../styles/AboutUs.css";
 import TrayCycleLogo from "/logo.png";
 
 type StatProps = {

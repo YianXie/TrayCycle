@@ -9,7 +9,6 @@ import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { type ChangeEvent, useState } from "react";
 
 import api from "../api.ts";
-import "../styles/Upload.css";
 
 export default function Upload() {
     const [file, setFile] = useState<File | null>(null);
