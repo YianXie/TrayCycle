@@ -1,0 +1,62 @@
+import { Box, Card, CardContent, Typography } from "@mui/material";
+import React from "react";
+
+export type KpiCardProps = {
+    value: string;
+    label: string;
+    hint?: string;
+    action?: React.ReactNode;
+};
+
+function KpiCard({ value, label, hint, action }: KpiCardProps) {
+    return (
+        <Card
+            variant="outlined"
+            sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                borderColor: "divider",
+                "&:hover": {
+                    borderColor: "primary.main",
+                    boxShadow: 1,
+                },
+            }}
+        >
+            <Box sx={{ height: 3, flexShrink: 0, bgcolor: "primary.main" }} />
+            <CardContent
+                sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.5,
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            >
+                <Typography
+                    variant="h3"
+                    component="p"
+                    sx={{
+                        fontWeight: 700,
+                        lineHeight: 1.05,
+                        letterSpacing: "-0.03em",
+                        fontVariantNumeric: "tabular-nums",
+                    }}
+                >
+                    {value}
+                </Typography>
+                <Typography variant="body2">{label}</Typography>
+                {hint && (
+                    <Typography variant="caption" color="text.secondary">
+                        {hint}
+                    </Typography>
+                )}
+                {action}
+            </CardContent>
+        </Card>
+    );
+}
+
+export default KpiCard;

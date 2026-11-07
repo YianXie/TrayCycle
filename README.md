@@ -329,6 +329,28 @@ npm install  # install the necessary dependencies
 npm run dev
 ```
 
+The frontend uses React and typescript, with Vite for deployment and builds, Material UI for interface components, and Toolpad Core as the dashboard layout. API requests uses Axios.
+
+Create frontend/.env.local with
+```dotenv
+VITE_API_URL=http://localhost:8000
+```
+Note that this assumes that Django runs on 8000 and is running for backend features. Restart Vite after changing environment variables. VITE_ is exposed to frontend code so do not put secrets into it.
+
+Where things are:
+frontend/
+├── src/
+│   ├── pages/              Page components: Home, About Us and a unused Upload page
+│   ├── components/layout/  Shared layout components
+│   ├── styles/             Page-specific CSS
+│   ├── api.ts              Shared Axios client and authentication handling
+│   ├── App.tsx             Application routing
+│   └── main.tsx            React entry point
+├── public/                 Public static assets
+└── package.json            Dependencies and development commands
+
+* Note that the upload function was removed because our school banned phones.
+
 ### Backend
 
 ```bash

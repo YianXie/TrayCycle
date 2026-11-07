@@ -13,13 +13,12 @@ import Box from "@mui/material/Box";
 // import Typography from "@mui/material/Typography";
 import { createTheme } from "@mui/material/styles";
 import { PageContainer } from "@toolpad/core";
-import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
+import type { Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
-import React from "react";
+import { ReactRouterAppProvider } from "@toolpad/core/react-router";
+import { Outlet, useLocation } from "react-router-dom";
 
 import usePageTitle from "../UsePageTitle";
-import AboutUs from "./AboutUs";
-import Dashboard from "./Dashboard";
 // import Upload from "./Upload";
 import TrayCycleLogo from "/traycycle-scan.svg";
 
@@ -66,24 +65,18 @@ const theme = createTheme({
 // The thing that loads the webpage, uses Toolpad
 export default function Home() {
     // State track active navigation menu item
-    const [pathname, setPathname] = React.useState("/dashboard");
+    const { pathname } = useLocation();
     const pages: Record<string, string> = {
         "/dashboard": "Dashboard",
         "/about-us": "About Us",
         "/upload": "Upload",
+        "/": "Home",
     };
-    const router = React.useMemo(() => {
-        return {
-            pathname,
-            searchParams: new URLSearchParams(),
-            navigate: (path: string | URL) => setPathname(String(path)),
-        };
-    }, [pathname]);
-    usePageTitle(pages[pathname] ?? "Home");
+    const title = pages[pathname] ?? "Page not found";
+    usePageTitle(pages[pathname] ?? "Page not found");
     return (
-        <AppProvider
+        <ReactRouterAppProvider
             navigation={NAVIGATION}
-            router={router}
             theme={theme}
             branding={{
                 logo: (
@@ -106,13 +99,11 @@ export default function Home() {
                         gap: 2,
                     }}
                 >
-                    <PageContainer>
-                        {pathname === "/dashboard" && <Dashboard />}
-                        {pathname === "/about-us" && <AboutUs />}
-                        {/* {pathname === "/upload" && <Upload />} */}
+                    <PageContainer title={title}>
+                        <Outlet />
                     </PageContainer>
                 </Box>
             </DashboardLayout>
-        </AppProvider>
+        </ReactRouterAppProvider>
     );
 }
