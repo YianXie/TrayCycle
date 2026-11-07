@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { router } from "./router";
+
 // Pull the backend URL from Vite environment variables
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,10 +30,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
+        if (
+            error.response &&
+            error.response.status === 401 &&
+            !router.state.location.pathname.includes("/login")
+        ) {
             // Token expired or invalid: Clear local storage and redirect to login
             localStorage.removeItem("token");
-            window.location.href = "/login";
+            router.navigate("/login", { replace: true });
         }
         return Promise.reject(error);
     }

@@ -20,7 +20,7 @@ import {
 import { alpha } from "@mui/material/styles";
 
 import "../styles/AboutUs.css";
-import TrayCycleLogo from "/traycycle-scan.svg";
+import TrayCycleLogo from "/logo.png";
 
 type StatProps = {
     value: string;

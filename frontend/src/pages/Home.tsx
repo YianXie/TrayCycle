@@ -6,11 +6,9 @@
  * For all users: displays items organized by predefined tags/categories.
  * Includes item comparison functionality with a bottom slider for selected items.
  */
-// import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
-// import Typography from "@mui/material/Typography";
 import { createTheme } from "@mui/material/styles";
 import { PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
@@ -19,8 +17,7 @@ import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import { Outlet, useLocation } from "react-router-dom";
 
 import usePageTitle from "../UsePageTitle";
-// import Upload from "./Upload";
-import TrayCycleLogo from "/traycycle-scan.svg";
+import TrayCycleLogo from "/logo.png";
 
 // Sidebar navigation stuff
 const NAVIGATION: Navigation = [
@@ -33,11 +30,6 @@ const NAVIGATION: Navigation = [
         title: "Dashboard",
         icon: <DashboardIcon />,
     },
-    // {
-    //     segment: "upload",
-    //     title: "Upload Captures",
-    //     icon: <CloudUploadIcon />,
-    // },
     {
         segment: "about-us",
         title: "About Us",
