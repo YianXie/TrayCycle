@@ -1,3 +1,4 @@
+import axios from "axios";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "react-toastify";
@@ -30,7 +31,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     const response = await apiClient.get("/api/accounts/me");
                     setUser(response.data);
                 } catch (error) {
-                    toast.error(`Error fetching user data: ${error}`);
+                    if (
+                        axios.isAxiosError(error) &&
+                        error.response?.status === 401
+                    ) {
+                        toast.error("Session expired. Please log in again.");
+                    } else {
+                        toast.error(`Error fetching user data: ${error}`);
+                    }
                     logout();
                 }
             }
