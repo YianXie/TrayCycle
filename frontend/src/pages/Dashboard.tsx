@@ -8,8 +8,9 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
 
 import { getStats } from "../api/stats";
+import DistributionChart from "../components/dashboard/DistributionChart";
 import KpiCard from "../components/dashboard/KpiCard";
-import type { Stats } from "../types/stats";
+import type { DishRow, Stats } from "../types/stats";
 
 const kpis = (stats: Stats) => [
     { label: "Bowls scanned", value: String(stats.bowl_count) },
@@ -44,6 +45,8 @@ const dayLabel = (iso: string) => {
     const [y, m, d] = iso.split("-");
     return `${Number(d)} ${MONTHS[Number(m) - 1]} ${y}`;
 };
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function BooButton() {
     const [booed, setBooed] = useState(false);
@@ -152,17 +155,26 @@ export default function Dashboard() {
                     {stats.dishes.map((dish) => (
                         <Grid
                             key={dish.dish_id}
-                            size={{ xs: 12, sm: 6, md: 4 }}
+                            size={{ xs: 12, sm: 6, md: 6 }}
                         >
                             <KpiCard
                                 value={`${dish.total_waste_kg.toFixed(2)} kg`}
                                 label={dish.dish_name}
-                                hint={`${dish.bowl_count} bowls · avg ${Math.round(dish.average_waste_percent)}% level`}
+                                hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
                                 action={<BooButton />}
                             />
                         </Grid>
                     ))}
                 </Grid>
+            </Box>
+            <Box component="section" sx={{ mt: 4 }}>
+                <Typography variant="h5" component="h2" gutterBottom>
+                    How much of each bowl wasted
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Distribution of bowls by waste level
+                </Typography>
+                <DistributionChart dishes={stats.dishes} />
             </Box>
         </div>
     );
