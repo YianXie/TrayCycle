@@ -1,8 +1,8 @@
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
-import { createTheme } from "@mui/material/styles";
-import { PageContainer } from "@toolpad/core";
+import Stack from "@mui/material/Stack";
+import { Account, PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
@@ -10,6 +10,8 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
 import usePageTitle from "../../hooks/usePageTitle";
+import { theme } from "../../theme";
+import ColorModeSwitcher from "./ColorModeSwitcher";
 import TrayCycleLogo from "/logo.png";
 
 // Sidebar navigation stuff
@@ -30,22 +32,15 @@ const NAVIGATION: Navigation = [
     },
 ];
 
-// Theme for the webpage
-const theme = createTheme({
-    cssVariables: {
-        colorSchemeSelector: "data-material-color-scheme",
-    },
-    colorSchemes: { light: true, dark: true },
-    breakpoints: {
-        values: {
-            xs: 0,
-            sm: 600,
-            md: 960,
-            lg: 1280,
-            xl: 1920,
-        },
-    },
-});
+// Replaces Toolpad's default light/dark toggle with one that also has "Auto"
+function ToolbarActions() {
+    return (
+        <Stack direction="row" alignItems="center">
+            <ColorModeSwitcher />
+            <Account />
+        </Stack>
+    );
+}
 
 // The thing that loads the webpage, uses Toolpad
 export default function Home() {
@@ -88,7 +83,7 @@ export default function Home() {
                 },
             }}
         >
-            <DashboardLayout>
+            <DashboardLayout slots={{ toolbarActions: ToolbarActions }}>
                 <Box
                     sx={{
                         py: 4,
