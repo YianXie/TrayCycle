@@ -270,7 +270,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
         response_data = []
         with transaction.atomic():
             pending_queryset = (
-                Capture.objects.select_for_update(skip_locked=True)
+                Capture.objects.select_for_update(skip_locked=True, of=("self",))
                 .select_related("device", "uploaded_by")
                 .prefetch_related("predictions__dish__station")
                 .filter(status=StatusChoices.PENDING)

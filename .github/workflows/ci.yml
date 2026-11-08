@@ -36,9 +36,23 @@ jobs:
       run:
         working-directory: ./backend
     env:
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      ADMIN_1_PASSWORD: ${{ secrets.ADMIN_1_PASSWORD }}
-      ADMIN_2_PASSWORD: ${{ secrets.ADMIN_2_PASSWORD }}
+      SECRET_KEY: ci-only-not-a-secret
+      ADMIN_1_PASSWORD: ci-only-not-a-secret
+      ADMIN_2_PASSWORD: ci-only-not-a-secret
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/traycycle_ci
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: traycycle_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -49,8 +63,61 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      - name: Check for missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
       - name: Run Django tests
         run: uv run python manage.py test
+
+  backend-migration-upgrade:
+    name: Backend Migration Upgrade
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-only-not-a-secret
+      ADMIN_1_PASSWORD: ci-only-not-a-secret
+      ADMIN_2_PASSWORD: ci-only-not-a-secret
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/traycycle_ci
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: traycycle_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: Check out pull request
+        uses: actions/checkout@v4
+        with:
+          path: head
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Apply target branch migrations
+        working-directory: ./base/backend
+        run: |
+          uv sync --locked
+          uv run python manage.py migrate --no-input
+
+      - name: Apply pull request migrations
+        working-directory: ./head/backend
+        run: |
+          uv sync --locked
+          uv run python manage.py migrate --no-input
 
   frontend-lint:
     name: Frontend Lint
