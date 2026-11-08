@@ -1,10 +1,9 @@
 import { Outlet, createBrowserRouter } from "react-router-dom";
 
-import Layout from "./components/layout/Layout";
+import Home from "./components/layout/AppShell";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import AboutUs from "./pages/AboutUs";
 import Dashboard from "./pages/Dashboard";
-import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Logout from "./pages/Logout";
 import NotFound from "./pages/NotFound";
@@ -12,28 +11,22 @@ import NotFound from "./pages/NotFound";
 export const router = createBrowserRouter([
     {
         path: "/",
-        element: <Layout />,
+        element: <Home />,
         children: [
             {
-                path: "/",
-                element: <Home />,
+                element: (
+                    <ProtectedRoute>
+                        <Outlet />
+                    </ProtectedRoute>
+                ),
                 children: [
-                    {
-                        element: (
-                            <ProtectedRoute>
-                                <Outlet />
-                            </ProtectedRoute>
-                        ),
-                        children: [
-                            { path: "dashboard", element: <Dashboard /> },
-                            { path: "about-us", element: <AboutUs /> },
-                            { path: "*", element: <NotFound /> },
-                        ],
-                    },
+                    { path: "dashboard", element: <Dashboard /> },
+                    { path: "about-us", element: <AboutUs /> },
+                    { path: "*", element: <NotFound /> },
                 ],
             },
-            { path: "login", element: <Login /> },
-            { path: "logout", element: <Logout /> },
         ],
     },
+    { path: "login", element: <Login /> },
+    { path: "logout", element: <Logout /> },
 ]);

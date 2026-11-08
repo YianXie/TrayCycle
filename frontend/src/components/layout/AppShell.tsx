@@ -1,11 +1,3 @@
-/**
- * Home page component - Main landing page with personalized suggestions
- *
- * Displays personalized item suggestions based on user authentication status.
- * For authenticated users: shows "Recommended For You" and "Saved by You" sections.
- * For all users: displays items organized by predefined tags/categories.
- * Includes item comparison functionality with a bottom slider for selected items.
- */
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
@@ -16,8 +8,8 @@ import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
-import usePageTitle from "../hooks/usePageTitle";
+import { useAuth } from "../../context/AuthContext";
+import usePageTitle from "../../hooks/usePageTitle";
 import TrayCycleLogo from "/logo.png";
 
 // Sidebar navigation stuff
