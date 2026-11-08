@@ -20,48 +20,6 @@ Live site: [traycycle.org](https://traycycle.org)
 - Axios — Handles API requests
 - React Router — Client-side routing
 
-**File tree:**
-
-```
-├── 📁 public
-│   ├── 🖼️ favicon.svg
-│   ├── 🖼️ icons.svg
-│   └── 🖼️ traycycle-scan.svg
-├── 📁 src
-│   ├── 📁 assets
-│   │   ├── 🖼️ hero.png
-│   │   ├── 🖼️ react.svg
-│   │   └── 🖼️ vite.svg
-│   ├── 📁 components
-│   │   └── 📁 layout
-│   │       ├── 📄 Header.tsx
-│   │       └── 📄 Layout.tsx
-│   ├── 📁 pages
-│   │   ├── 📄 AboutUs.tsx
-│   │   ├── 📄 Dashboard.tsx
-│   │   ├── 📄 Home.tsx
-│   │   └── 📄 Upload.tsx
-│   ├── 📁 styles
-│   │   ├── 🎨 AboutUs.css
-│   │   └── 🎨 Upload.css
-│   ├── 🎨 App.css
-│   ├── 📄 App.tsx
-│   ├── 📄 UsePageTitle.tsx
-│   ├── 📄 api.ts
-│   ├── 🎨 index.css
-│   └── 📄 main.tsx
-├── ⚙️ .prettierignore
-├── ⚙️ .prettierrc
-├── 📄 eslint.config.js
-├── 🌐 index.html
-├── ⚙️ package-lock.json
-├── ⚙️ package.json
-├── ⚙️ tsconfig.app.json
-├── ⚙️ tsconfig.json
-├── ⚙️ tsconfig.node.json
-└── 📄 vite.config.ts
-```
-
 ### Backend
 
 - Django — Base framework
@@ -71,37 +29,39 @@ Live site: [traycycle.org](https://traycycle.org)
 
 **Endpoints:**
 
-|       **Method**        |           **Endpoint**           |                   **Description**                    |    **Auth**     |
-| :---------------------: | :------------------------------: | :--------------------------------------------------: | :-------------: |
-|          POST           |        `/api-token-auth`         |                Obtain the auth token                 |      None       |
-|        GET, POST        |         `/api/stations`          |               List or create stations                |      Staff      |
-| GET, PUT, PATCH, DELETE |       `/api/stations/{id}`       |          Read, update, or delete a station           |      Staff      |
-|        GET, POST        |          `/api/dishes`           |                List or create dishes                 |      Staff      |
-| GET, PUT, PATCH, DELETE |        `/api/dishes/{id}`        |            Read, update, or delete a dish            |      Staff      |
-|           GET           |           `/api/menus`           |                   List menu items                    | Staff or worker |
-|           GET           |       `/api/menus/{date}`        |                Retrieve menu on a day                | Staff or worker |
-|          POST           |           `/api/menus`           |                  Create menu items                   |      Staff      |
-|   PUT, PATCH, DELETE    |       `/api/menus/{date}`        |         Update or delete a menu day instance         |      Staff      |
-|        POST, GET        |          `/api/devices`          |                List or create devices                |      Staff      |
-| GET, PUT, PATCH, DELETE |       `/api/devices/{id}`        |           Read, update, or delete a device           |      Staff      |
-|          POST           | `/api/devices/{id}/rotate-token` |               Rotate a device's token                |      Staff      |
-|           GET           |         `/api/captures`          |                    List captures                     |      Staff      |
-|          POST           |         `/api/captures`          |                   Create a capture                   | Staff or device |
-| GET, PUT, PATCH, DELETE |       `/api/captures/{id}`       |          Read, update, or delete a capture           |      Staff      |
-|          POST           |    `/api/captures/{id}/claim`    |              Claim a capture to process              | Staff or worker |
-|          POST           |    `/api/captures/{id}/fail`     |               Set a capture as failed                | Staff or worker |
-|           GET           |        `/api/predictions`        |                   Read predictions                   |      Staff      |
-|          POST           |        `/api/predictions`        |                 Create a prediction                  | Staff or worker |
-| GET, PUT, PATCH, DELETE |     `/api/predictions/{id}`      |         Read, update, or delete a prediction         |      Staff      |
-|        GET, POST        |          `/api/labels`           |                List or create labels                 |      Staff      |
-| GET, PUT, PATCH, DELETE |        `/api/labels/{id}`        |           Read, update, or delete a label            |      Staff      |
-|        GET, POST        |    `/api/overproduction/{id}`    |          List or create overproduction logs          |      Staff      |
-| GET, PUT, PATCH, DELETE |    `/api/overproduction/{id}`    |     Read, update, or delete a overproduction log     |      Staff      |
-|           GET           |           `/api/stats`           | Fetch prediction stats based on the provided filters |      Staff      |
-|           GET           |         `/api/forecast`          |          Fetch forecast of waste data (WIP)          |      Staff      |
+|       **Method**        |              **Endpoint**               |                   **Description**                    |    **Auth**     |
+| :---------------------: | :-------------------------------------: | :--------------------------------------------------: | :-------------: |
+|          POST           |          `/api/accounts/login`          |           Log in and obtain the auth token           |      None       |
+|           GET           |           `/api/accounts/me`            |     Get the current authenticated user's profile     |  Authenticated  |
+|           GET           |          `/api/wastes/health`           |                     Health check                     |      None       |
+|        GET, POST        |         `/api/wastes/stations`          |               List or create stations                |      Staff      |
+| GET, PUT, PATCH, DELETE |       `/api/wastes/stations/{id}`       |          Read, update, or delete a station           |      Staff      |
+|        GET, POST        |          `/api/wastes/dishes`           |                List or create dishes                 |      Staff      |
+| GET, PUT, PATCH, DELETE |        `/api/wastes/dishes/{id}`        |            Read, update, or delete a dish            |      Staff      |
+|           GET           |           `/api/wastes/menus`           |                   List menu items                    | Staff or worker |
+|           GET           |       `/api/wastes/menus/{date}`        |                Retrieve menu on a day                | Staff or worker |
+|          POST           |           `/api/wastes/menus`           |                  Create menu items                   |      Staff      |
+|   PUT, PATCH, DELETE    |       `/api/wastes/menus/{date}`        |         Update or delete a menu day instance         |      Staff      |
+|        GET, POST        |          `/api/wastes/devices`          |                List or create devices                |      Staff      |
+| GET, PUT, PATCH, DELETE |       `/api/wastes/devices/{id}`        |           Read, update, or delete a device           |      Staff      |
+|          POST           | `/api/wastes/devices/{id}/rotate-token` |               Rotate a device's token                |      Staff      |
+|           GET           |         `/api/wastes/captures`          |                    List captures                     |      Staff      |
+|          POST           |         `/api/wastes/captures`          |                   Create a capture                   | Staff or device |
+| GET, PUT, PATCH, DELETE |       `/api/wastes/captures/{id}`       |          Read, update, or delete a capture           |      Staff      |
+|          POST           |      `/api/wastes/captures/claim`       |          Claim the next capture to process           | Staff or worker |
+|          POST           |    `/api/wastes/captures/{id}/fail`     |               Set a capture as failed                | Staff or worker |
+|           GET           |        `/api/wastes/predictions`        |                   List predictions                   |      Staff      |
+|           GET           |     `/api/wastes/predictions/{id}`      |                  Read a prediction                   |      Staff      |
+|          POST           |        `/api/wastes/predictions`        |                 Create a prediction                  | Staff or worker |
+|        GET, POST        |          `/api/wastes/labels`           |                List or create labels                 |      Staff      |
+| GET, PUT, PATCH, DELETE |        `/api/wastes/labels/{id}`        |           Read, update, or delete a label            |      Staff      |
+|        GET, POST        |      `/api/wastes/overproduction`       |          List or create overproduction logs          |      Staff      |
+| GET, PUT, PATCH, DELETE |    `/api/wastes/overproduction/{id}`    |    Read, update, or delete an overproduction log     |      Staff      |
+|           GET           |           `/api/wastes/stats`           | Fetch prediction stats based on the provided filters |  Authenticated  |
+|           GET           |         `/api/wastes/forecast`          |          Fetch forecast of waste data (WIP)          |      Staff      |
 
 <details>
-<summary><b>Example `/api/stats` return response:</b></summary>
+<summary><b>Example `/api/wastes/stats` return response:</b></summary>
 
 ```json
 {
@@ -253,60 +213,6 @@ Live site: [traycycle.org](https://traycycle.org)
 
 </details>
 
-<br>
-
-**File tree:**
-
-```
-├── 📁 core
-│   ├── 🐍 __init__.py
-│   ├── 🐍 asgi.py
-│   ├── 🐍 settings.py
-│   ├── 🐍 urls.py
-│   └── 🐍 wsgi.py
-├── 📁 waste
-│   ├── 📁 management
-│   │   ├── 📁 commands
-│   │   │   ├── 🐍 __init__.py
-│   │   │   ├── 🐍 create_worker.py
-│   │   │   └── 🐍 seed_demo.py
-│   │   └── 🐍 __init__.py
-│   ├── 📁 tests
-│   │   ├── 🐍 __init__.py
-│   │   ├── 🐍 shared.py
-│   │   ├── 🐍 test_captures.py
-│   │   ├── 🐍 test_commands.py
-│   │   ├── 🐍 test_devices.py
-│   │   ├── 🐍 test_dishes.py
-│   │   ├── 🐍 test_labels.py
-│   │   ├── 🐍 test_menu_days.py
-│   │   ├── 🐍 test_overproduction_logs.py
-│   │   ├── 🐍 test_predictions.py
-│   │   ├── 🐍 test_stations.py
-│   │   ├── 🐍 test_stats.py
-│   │   ├── 🐍 test_users.py
-│   │   └── 🐍 test_workers.py
-│   ├── 🐍 __init__.py
-│   ├── 🐍 admin.py
-│   ├── 🐍 apps.py
-│   ├── 🐍 authentication.py
-│   ├── 🐍 constants.py
-│   ├── 🐍 exceptions.py
-│   ├── 🐍 filters.py
-│   ├── 🐍 models.py
-│   ├── 🐍 pagination.py
-│   ├── 🐍 permissions.py
-│   ├── 🐍 serializers.py
-│   ├── 🐍 urls.py
-│   └── 🐍 views.py
-├── ⚙️ .env.example
-├── 📄 build.sh
-├── 📄 db.sqlite3
-├── 🐍 manage.py
-├── ⚙️ pyproject.toml
-└── 📄 uv.lock
-```
-
 ### Database & Media Storage
 
 #### Development
@@ -331,25 +237,9 @@ npm run dev
 
 The frontend uses React and typescript, with Vite for deployment and builds, Material UI for interface components, and Toolpad Core as the dashboard layout. API requests uses Axios.
 
-Create frontend/.env.local with
-```dotenv
-VITE_API_URL=http://localhost:8000
-```
-Note that this assumes that Django runs on 8000 and is running for backend features. Restart Vite after changing environment variables. VITE_ is exposed to frontend code so do not put secrets into it.
+Note that it assumes that Django runs on 8000 and is running for backend features. Restart Vite after changing environment variables. VITE is exposed to frontend code so do not put secrets into it.
 
-Where things are:
-frontend/
-├── src/
-│   ├── pages/              Page components: Home, About Us and a unused Upload page
-│   ├── components/layout/  Shared layout components
-│   ├── styles/             Page-specific CSS
-│   ├── api.ts              Shared Axios client and authentication handling
-│   ├── App.tsx             Application routing
-│   └── main.tsx            React entry point
-├── public/                 Public static assets
-└── package.json            Dependencies and development commands
-
-* Note that the upload function was removed because our school banned phones.
+Note that the upload function was removed because our school banned phones :sob:.
 
 ### Backend
 

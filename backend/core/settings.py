@@ -24,6 +24,8 @@ DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])  # pyright: ignore[reportArgumentType]
 
+APPEND_SLASH = False
+
 
 # Application definition
 
@@ -33,6 +35,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "waste",
+    "accounts",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -199,4 +202,4 @@ else:
 
 # Custom user model
 
-AUTH_USER_MODEL = "waste.User"
+AUTH_USER_MODEL = "accounts.User"

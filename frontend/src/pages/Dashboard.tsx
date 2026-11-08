@@ -3,7 +3,10 @@
  *
  * Displays food wasted today, trends and other statistical information that the api returns
  */
-import { Box, Button, Grid, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
+import Typography from "@mui/material/Typography";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
 
@@ -68,6 +71,7 @@ function BooButton() {
 export default function Dashboard() {
     const [status, setStatus] = useState<Status>("loading");
     const [stats, setStats] = useState<Stats | null>(null);
+
     useEffect(() => {
         let ignore = false;
         getStats({})

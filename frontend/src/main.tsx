@@ -1,11 +1,27 @@
+import CssBaseline from "@mui/material/CssBaseline";
+import { ThemeProvider } from "@mui/material/styles";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
-import App from "./App.tsx";
-import "./index.css";
+import { AuthProvider } from "./contexts/AuthContext.tsx";
+import { router } from "./router.tsx";
+import { COLOR_SCHEME_STORAGE_KEY, MODE_STORAGE_KEY, theme } from "./theme";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
-        <App />
+        <ThemeProvider
+            theme={theme}
+            defaultMode="system"
+            modeStorageKey={MODE_STORAGE_KEY}
+            colorSchemeStorageKey={COLOR_SCHEME_STORAGE_KEY}
+        >
+            <CssBaseline />
+            <AuthProvider>
+                <RouterProvider router={router} />
+            </AuthProvider>
+            <ToastContainer />
+        </ThemeProvider>
     </StrictMode>
 );
