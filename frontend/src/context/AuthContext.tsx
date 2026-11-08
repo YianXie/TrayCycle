@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { toast } from "react-toastify";
 
 import { login as authLogin, getMe } from "../api/auth";
+import { tokenStorage } from "../module/tokenStorage";
 import type { AuthContextValue, User } from "../types/auth";
 
 const AuthContext = createContext<AuthContextValue>(
@@ -11,14 +12,12 @@ const AuthContext = createContext<AuthContextValue>(
 );
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [token, setToken] = useState<string | null>(
-        localStorage.getItem("token")
-    );
+    const [token, setToken] = useState<string | null>(tokenStorage.getToken());
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     const logout = () => {
-        localStorage.removeItem("token");
+        tokenStorage.removeToken();
         setToken(null);
         setUser(null);
     };
@@ -50,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (username: string, password: string) => {
         try {
             const { token, user } = await authLogin(username, password);
-            localStorage.setItem("token", token);
+            tokenStorage.setToken(token);
             setToken(token);
             setUser(user);
         } catch (error) {
