@@ -50,7 +50,6 @@ export default function Home() {
     const pages: Record<string, string> = {
         "/dashboard": "Dashboard",
         "/about-us": "About Us",
-        "/upload": "Upload",
         "/": "Home",
     };
     const title = pages[pathname] ?? "Page not found";

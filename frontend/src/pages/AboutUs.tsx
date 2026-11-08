@@ -6,17 +6,15 @@
  * Displays that our focus is UN SDG 12, specifically food waste
  * Displays some stats about how food waste is a real problem in SAS, SG, and worldwide
  */
-import {
-    Box,
-    Card,
-    CardContent,
-    Chip,
-    Divider,
-    Grid,
-    Link,
-    Stack,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 
 import TrayCycleLogo from "/logo.png";

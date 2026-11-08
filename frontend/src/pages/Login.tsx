@@ -1,11 +1,9 @@
-import {
-    Alert,
-    Box,
-    Button,
-    Paper,
-    TextField,
-    Typography,
-} from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { Navigate, useLocation } from "react-router-dom";

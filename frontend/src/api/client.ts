@@ -8,9 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
     baseURL: API_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
+    timeout: 10000, // 10 seconds timeout
 });
 
 // Request interceptor to inject the token dynamically

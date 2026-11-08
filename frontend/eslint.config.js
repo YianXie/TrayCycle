@@ -1,5 +1,6 @@
 import js from "@eslint/js";
-import reactHooks from "eslint-plugin-react-hooks";
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
@@ -12,11 +13,22 @@ export default defineConfig([
         extends: [
             js.configs.recommended,
             tseslint.configs.recommended,
-            reactHooks.configs.flat.recommended,
+            reactPlugin.configs.flat.recommended,
+            reactPlugin.configs.flat["jsx-runtime"],
+            reactHooksPlugin.configs.flat.recommended,
             reactRefresh.configs.vite,
         ],
         languageOptions: {
             globals: globals.browser,
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+        settings: {
+            react: {
+                version: "detect",
+            },
         },
     },
 ]);

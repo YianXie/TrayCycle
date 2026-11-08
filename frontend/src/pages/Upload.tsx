@@ -5,7 +5,12 @@
  * Allows the preview of the images before upload
  * Upload button to upload to server
  */
-import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { type ChangeEvent, useState } from "react";
 
 import api from "../api/client";
