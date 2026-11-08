@@ -13,6 +13,7 @@ export type AuthContextValue = {
     token: string | null;
     user: User | null;
     loading: boolean;
+    isAuthenticated: boolean;
     login: (username: string, password: string) => Promise<unknown>;
     logout: () => void;
 };

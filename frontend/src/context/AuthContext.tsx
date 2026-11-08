@@ -13,13 +13,15 @@ const AuthContext = createContext<AuthContextValue>(
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [token, setToken] = useState<string | null>(tokenStorage.getToken());
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!token);
     const [loading, setLoading] = useState(true);
 
     const logout = () => {
         tokenStorage.removeToken();
         setToken(null);
         setUser(null);
+        setIsAuthenticated(false);
     };
 
     // Authenticate user if a token already exists on load
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 try {
                     const data = await getMe();
                     setUser(data);
+                    setIsAuthenticated(true);
                 } catch (error) {
                     if (
                         axios.isAxiosError(error) &&
@@ -52,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             tokenStorage.setToken(token);
             setToken(token);
             setUser(user);
+            setIsAuthenticated(true);
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 if (error.response?.status === 401) {
@@ -70,7 +74,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ token, user, loading, login, logout }}>
+        <AuthContext.Provider
+            value={{ token, user, loading, isAuthenticated, login, logout }}
+        >
             {children}
         </AuthContext.Provider>
     );
