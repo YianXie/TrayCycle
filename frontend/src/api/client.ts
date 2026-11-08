@@ -1,11 +1,11 @@
 import axios from "axios";
 
-import { router } from "./router";
+import { router } from "../router";
 
 // Pull the backend URL from Vite environment variables
 const API_URL = import.meta.env.VITE_API_URL;
 
-const apiClient = axios.create({
+const api = axios.create({
     baseURL: API_URL,
     headers: {
         "Content-Type": "application/json",
@@ -13,7 +13,7 @@ const apiClient = axios.create({
 });
 
 // Request interceptor to inject the token dynamically
-apiClient.interceptors.request.use(
+api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -27,7 +27,7 @@ apiClient.interceptors.request.use(
 );
 
 // Response interceptor to catch global errors (like 401 Unauthorized)
-apiClient.interceptors.response.use(
+api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (
@@ -43,4 +43,4 @@ apiClient.interceptors.response.use(
     }
 );
 
-export default apiClient;
+export default api;

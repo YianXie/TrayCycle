@@ -1,4 +1,4 @@
-import api from "../api";
+import api from "../api/client";
 import type { Stats, StatsParams } from "../types/stats";
 
 const USE_MOCK = false;

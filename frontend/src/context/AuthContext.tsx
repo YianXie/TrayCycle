@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "react-toastify";
 
-import apiClient from "../api";
+import { login as authLogin, getMe } from "../api/auth";
 import type { AuthContextValue, User } from "../types/auth";
 
 const AuthContext = createContext<AuthContextValue>(
@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const fetchUser = async () => {
             if (token) {
                 try {
-                    const response = await apiClient.get("/api/accounts/me");
-                    setUser(response.data);
+                    const data = await getMe();
+                    setUser(data);
                 } catch (error) {
                     if (
                         axios.isAxiosError(error) &&
@@ -48,16 +48,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, [token]);
 
     const login = async (username: string, password: string) => {
-        const response = await apiClient.post("/api/accounts/login", {
-            username,
-            password,
-        });
-        const { token: userToken, user: userData } = response.data;
-
-        localStorage.setItem("token", userToken);
-        setToken(userToken);
-        setUser(userData);
-        return response.data;
+        try {
+            const { token, user } = await authLogin(username, password);
+            localStorage.setItem("token", token);
+            setToken(token);
+            setUser(user);
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    toast.error("Invalid username or password.");
+                } else {
+                    toast.error(
+                        `Login failed: ${
+                            error.response?.data?.detail || error.message
+                        }`
+                    );
+                }
+            } else {
+                toast.error(`Login failed: ${error}`);
+            }
+        }
     };
 
     return (
