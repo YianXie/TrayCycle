@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { toast } from "react-toastify";
 
 import { login as authLogin, getMe } from "../api/auth";
-import { tokenStorage } from "../module/tokenStorage";
+import { tokenStorage } from "../modules/tokenStorage";
 import type { AuthContextValue, User } from "../types/auth";
 
 const AuthContext = createContext<AuthContextValue>(

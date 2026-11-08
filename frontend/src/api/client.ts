@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { tokenStorage } from "../module/tokenStorage";
+import { tokenStorage } from "../modules/tokenStorage";
 import { router } from "../router";
 
 // Pull the backend URL from Vite environment variables

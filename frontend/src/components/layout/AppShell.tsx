@@ -8,7 +8,7 @@ import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import usePageTitle from "../../hooks/usePageTitle";
 import { theme } from "../../theme";
 import ColorModeSwitcher from "./ColorModeSwitcher";
