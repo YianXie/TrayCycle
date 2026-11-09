@@ -1,3 +1,8 @@
+/**
+ * Logout page for the TriCycle web application.
+ *
+ * Logs the user out and redirects them to the login page.
+ */
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 

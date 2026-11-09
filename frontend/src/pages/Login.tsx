@@ -1,3 +1,9 @@
+/**
+ * Login page for the TriCycle web application.
+ *
+ * Allows the user to log in with their username and password.
+ * If the login is successful, the user is redirected to the page they were trying to access before being prompted to log in, or to the dashboard if no specific page was requested.
+ */
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";

@@ -61,7 +61,7 @@ function BooButton() {
             onClick={() => setBooed(!booed)}
             startIcon={booed ? "🍅" : "👎"}
             size="small"
-            sx={{ borderRadius: 20, textTransform: "none" }} // Rounded pill shape, clean text
+            sx={{ borderRadius: 20, textTransform: "none" }}
         >
             {booed ? "Booed!" : "Boo"}
         </Button>

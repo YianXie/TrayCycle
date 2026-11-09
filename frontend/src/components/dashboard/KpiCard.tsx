@@ -1,3 +1,10 @@
+/**
+ * KPI Card component for the TriCycle web application.
+ *
+ * Displays a card with a key performance indicator (KPI) value, label, optional hint, and optional action.
+ * The card has a colored top border and changes appearance on hover.
+ */
+
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";

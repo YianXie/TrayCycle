@@ -1,3 +1,6 @@
+/**
+ * Page displayed when the user navigates to a route that does not exist.
+ */
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";

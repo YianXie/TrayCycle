@@ -1,3 +1,11 @@
+/**
+ * Distribution Chart component for the TriCycle web application.
+ *
+ * Displays a horizontal stacked bar chart showing the distribution of waste buckets for each dish.
+ * Each bar represents a dish, and the segments of the bar represent the percentage of bowls in each waste bucket (0%, 25%, 50%, 75%, 100%).
+ * If no bowls are recorded for any dishes, a message is displayed instead of the chart.
+ */
+
 import Typography from "@mui/material/Typography";
 import { alpha, useTheme } from "@mui/material/styles";
 import { BarChart } from "@mui/x-charts/BarChart";
