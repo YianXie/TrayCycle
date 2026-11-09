@@ -5,7 +5,9 @@
 A camera-based food-waste tracker for the SAS cafeteria, presented measured waste in kg per dish plus a dashboard the kitchen can act on.
 
 Connection to theme: [Google Docs](https://docs.google.com/document/d/1deMZ1dqA7uKFVp50j_QAB9uro-kUMkfiM3LVuQ0eOIQ/edit?usp=sharing)
+
 Presentation slides: [Google Slides](https://docs.google.com/presentation/d/1yP6BdAPeri5FJA7uHaJRGIY7rOP3S1hKGzQTQR-aGcE/edit?usp=sharing)
+
 Live site: [traycycle.org](https://traycycle.org)
 
 ## Preview
