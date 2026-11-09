@@ -16,16 +16,16 @@ The hard-coded margin.left of 120 can cut off long dish names.
 Daily line chart:
 The point scale squashes missing days together.
 The axis shows 10-26 while the subtitle shows 26 Oct 2026. Use one Intl.DateTimeFormat helper for both.
-v?.toFixed(2) can print “undefined kg”.
+[DONE] v?.toFixed(2) can print “undefined kg”.
 The “Boo” button saves nothing and has no toggle semantics for screen readers. Remove it, or replace it with something useful like “filter to this dish”.
-KPI and stat cards highlight on hover, which makes them look clickable when they aren’t.
+[DONE] KPI and stat cards highlight on hover, which makes them look clickable when they aren’t.
 Double padding: the wrapper Box plus PageContainer leaves too much padding, worst on mobile. Toolpad also overrides the logo’s height: 75.
 Accessibility:
 The nested <main> elements (see item 7).
 The heading hierarchy is off.
-Every link on About Us reads just “Source” and opens a new tab without saying so.
+[DONE] Every link on About Us reads just “Source” and opens a new tab without saying so.
 The numbered list is plain divs instead of a real list.
-Logos next to the app name should use alt="".
+[DONE] Logos next to the app name should use alt="".
 Copy and polish:
 Vague KPI labels (e.g. “Average waste level”).
 The “Main Items” nav header is placeholder text.

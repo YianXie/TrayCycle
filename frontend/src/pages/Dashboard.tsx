@@ -138,7 +138,7 @@ export default function Dashboard() {
                         {
                             dataKey: "total_waste_kg",
                             label: "Waste (kg)",
-                            valueFormatter: (v) => `${v?.toFixed(2)} kg`,
+                            valueFormatter: (v) => `${v?.toFixed(2) ?? "0.00"} kg`,
                         },
                     ]}
                     xAxis={[

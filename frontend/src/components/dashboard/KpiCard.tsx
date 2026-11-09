@@ -28,10 +28,10 @@ function KpiCard({ value, label, hint, action }: KpiCardProps) {
                 flexDirection: "column",
                 overflow: "hidden",
                 borderColor: "divider",
-                "&:hover": {
-                    borderColor: "primary.main",
-                    boxShadow: 1,
-                },
+                // "&:hover": {
+                //     borderColor: "primary.main",
+                //     boxShadow: 1,
+                // },
             }}
         >
             <Box sx={{ height: 3, flexShrink: 0, bgcolor: "primary.main" }} />

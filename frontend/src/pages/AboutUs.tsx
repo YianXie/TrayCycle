@@ -288,7 +288,7 @@ export default function AboutUs() {
                                         rel="noopener noreferrer"
                                         underline="hover"
                                     >
-                                        Source
+                                        Go to source
                                     </Link>
                                 </Typography>
                             </Grid>
