@@ -1,0 +1,36 @@
+TODOs:
+
+Dashboard filters: add date range (with presets), station and dish, kept in the URL so views can be shared. StatsParams already has these fields; nothing uses them.
+Per-dish daily trends (dishes[].daily) and daily average waste % are returned by the API but never shown.
+A captures review and labelling page: a paginated list filtered by needs_review, plus a form that posts a corrected label. This is what makes the stats trustworthy.
+Overproduction logging, plus admin screens for dishes, stations and menus, so staff can stop using Django admin.
+Use /health as a “server reachable” indicator. Keep /forecast (it returns 501 right now) out of the UI until it’s implemented.
+Loading, error and empty states are bare text. Use skeletons shaped like the KPI cards and charts, and an error Alert with a Retry button and a reason.
+Login error messages: tell “wrong credentials” apart from “can’t reach server” and other server errors. Also set the tab title on the Login page, mark the fields as errored, and add the logo.
+
+Distribution chart:
+Tooltips show raw floats like 33.3333%; add a valueFormatter.
+The legend labels “0%…100%” are ambiguous on a “% of bowls” axis; something like “0% left … all left” reads better.
+The lowest-opacity colors have poor contrast, especially in dark mode.
+The hard-coded margin.left of 120 can cut off long dish names.
+Daily line chart:
+The point scale squashes missing days together.
+The axis shows 10-26 while the subtitle shows 26 Oct 2026. Use one Intl.DateTimeFormat helper for both.
+v?.toFixed(2) can print “undefined kg”.
+The “Boo” button saves nothing and has no toggle semantics for screen readers. Remove it, or replace it with something useful like “filter to this dish”.
+KPI and stat cards highlight on hover, which makes them look clickable when they aren’t.
+Double padding: the wrapper Box plus PageContainer leaves too much padding, worst on mobile. Toolpad also overrides the logo’s height: 75.
+Accessibility:
+The nested <main> elements (see item 7).
+The heading hierarchy is off.
+Every link on About Us reads just “Source” and opens a new tab without saying so.
+The numbered list is plain divs instead of a real list.
+Logos next to the app name should use alt="".
+Copy and polish:
+Vague KPI labels (e.g. “Average waste level”).
+The “Main Items” nav header is placeholder text.
+About Us uses a Person icon.
+About Us has small wording issues and a stray Divider.
+index.html has no description meta tag.
+
+work on improving the mobile responsiveness after you are done with the things that Claude suggested
