@@ -4,6 +4,10 @@
 
 A camera-based food-waste tracker for the SAS cafeteria, presented measured waste in kg per dish plus a dashboard the kitchen can act on.
 
+Connection to theme: [Google Docs](https://docs.google.com/document/d/1deMZ1dqA7uKFVp50j_QAB9uro-kUMkfiM3LVuQ0eOIQ/edit?usp=sharing)
+
+Presentation slides: [Google Slides](https://docs.google.com/presentation/d/1yP6BdAPeri5FJA7uHaJRGIY7rOP3S1hKGzQTQR-aGcE/edit?usp=sharing)
+
 Live site: [traycycle.org](https://traycycle.org)
 
 ## Preview
@@ -27,7 +31,22 @@ Live site: [traycycle.org](https://traycycle.org)
 - uv — Python dependencies management
 - django-filter — Create dynamic filter rules in URL query parameters
 
-**Endpoints:**
+**Management commands:**
+
+1. `python manage.py create_worker`
+   Create a new worker user and generate an authentication token.
+   Args:
+   `--username <name>`: Username for the worker user.
+   `--group <name>`: Group to which the new user will be added.
+   `--rotate-token`: Rotate the token if the user already exists.
+
+2. `python manage.py seed_demo`
+   Populate the database with fake demo data.
+   Args:
+   `--force`: Force the creation of demo data even if there are existing data. Existing data will be replaced.
+
+<details>
+<summary><b>Endpoints:</b></summary>
 
 |       **Method**        |              **Endpoint**               |                   **Description**                    |    **Auth**     |
 | :---------------------: | :-------------------------------------: | :--------------------------------------------------: | :-------------: |
@@ -59,6 +78,8 @@ Live site: [traycycle.org](https://traycycle.org)
 | GET, PUT, PATCH, DELETE |    `/api/wastes/overproduction/{id}`    |    Read, update, or delete an overproduction log     |      Staff      |
 |           GET           |           `/api/wastes/stats`           | Fetch prediction stats based on the provided filters |  Authenticated  |
 |           GET           |         `/api/wastes/forecast`          |          Fetch forecast of waste data (WIP)          |      Staff      |
+
+</details>
 
 <details>
 <summary><b>Example `/api/wastes/stats` return response:</b></summary>
@@ -213,6 +234,10 @@ Live site: [traycycle.org](https://traycycle.org)
 
 </details>
 
+### Raspberry Pi 5 Image Capture
+
+WIP
+
 ### Database & Media Storage
 
 #### Development
@@ -256,11 +281,12 @@ You do not need a separate database or media storage for local development. The 
 
 ## GitHub Actions
 
-The GitHub Actions CI/CD contains 3 components:
+The GitHub Actions CI/CD has 4 jobs:
 
 1. Backend lint: run ruff lint and format checks
 2. Backend tests: run Django tests
-3. Frontend lint: run ESLint, Prettier, and npm build
+3. Backend migration upgrade: apply pull request and target branch migration
+4. Frontend lint: run ESLint, Prettier, and npm build
 
 To run CI locally, use the command `make ci-local`; to run checks individually, use the following commands:
 
