@@ -31,6 +31,6 @@ Vague KPI labels (e.g. “Average waste level”).
 The “Main Items” nav header is placeholder text.
 About Us uses a Person icon.
 About Us has small wording issues and a stray Divider.
-index.html has no description meta tag.
+[DONE] index.html has no description meta tag.
 
 work on improving the mobile responsiveness after you are done with the things that Claude suggested
