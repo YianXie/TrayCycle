@@ -78,7 +78,7 @@ class Worker:
 
             try:
                 response = session.post(
-                    f"{ENDPOINT}/api/captures/claim",
+                    f"{ENDPOINT}/api/wastes/captures/claim",
                     timeout=10,
                 )
                 response.raise_for_status()
@@ -90,7 +90,7 @@ class Worker:
                         captured_at = iso_datetime_to_date(capture["captured_at"])
                         if captured_at not in menu_cache:
                             menu_day_response = session.get(
-                                f"{ENDPOINT}/api/menus/{captured_at}",
+                                f"{ENDPOINT}/api/wastes/menus/{captured_at}",
                                 timeout=10,
                             )
                             menu_day_response.raise_for_status()
@@ -108,7 +108,7 @@ class Worker:
                             # Model exception occurred, report failure to the server
                             try:
                                 update_response = session.post(
-                                    f"{ENDPOINT}/api/captures/{capture['id']}/fail",
+                                    f"{ENDPOINT}/api/wastes/captures/{capture['id']}/fail",
                                     timeout=10,
                                     json={"failure_reason": str(e)},
                                 )
@@ -119,7 +119,7 @@ class Worker:
                             continue  # Skip to the next capture
                         else:
                             update_response = session.post(
-                                f"{ENDPOINT}/api/predictions",
+                                f"{ENDPOINT}/api/wastes/predictions",
                                 timeout=10,
                                 json={
                                     "capture": capture["id"],
@@ -138,7 +138,7 @@ class Worker:
                         if status_code in (400, 404):
                             try:
                                 update_response = session.post(
-                                    f"{ENDPOINT}/api/captures/{capture['id']}/fail",
+                                    f"{ENDPOINT}/api/wastes/captures/{capture['id']}/fail",
                                     timeout=10,
                                     json={"failure_reason": str(http_err)},
                                 )
@@ -157,7 +157,7 @@ class Worker:
                         )
                         try:
                             update_response = session.post(
-                                f"{ENDPOINT}/api/captures/{capture['id']}/fail",
+                                f"{ENDPOINT}/api/wastes/captures/{capture['id']}/fail",
                                 timeout=10,
                                 json={"failure_reason": str(img_err)},
                             )
