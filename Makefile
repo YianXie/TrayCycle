@@ -1,4 +1,4 @@
-.PHONY: help install test lint format ci-local
+.PHONY: help install test lint format format-check ci-local frontend backend worker
 
 # Help command to display available commands
 help:
@@ -48,3 +48,18 @@ ci-local:
 	$(MAKE) lint
 	$(MAKE) test
 	$(MAKE) format-check
+
+# Run frontend
+frontend:
+	@echo "Starting frontend development server..."
+	cd frontend && npm run dev
+
+# Run backend
+backend:
+	@echo "Starting backend development server..."
+	cd backend && uv run python manage.py runserver
+
+# Run worker
+worker:
+	@echo "Starting Celery worker..."
+	cd worker && uv run python -m worker.main
