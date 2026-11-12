@@ -218,14 +218,14 @@ export default function AboutUs() {
                         color="text.secondary"
                         sx={{ maxWidth: "67ch" }}
                     >
-                        {/* Description of the TriCycle project */}
-                        A camera-based plate-waste tracker for the SAS
-                        cafeteria. Measures what gets thrown away, so the
-                        kitchen knows what to change.
+                        {/* Description of the TriCycle project */}A
+                        camera-based plate-waste tracker for the SAS cafeteria.
+                        Measures what gets thrown away, so the kitchen knows
+                        what to change.
                     </Typography>
                 </Box>
             </Box>
-                {/* Facts about the problem that we are addressing */}
+            {/* Facts about the problem that we are addressing */}
             <Box component="section">
                 <Typography variant="h5" component="h2" gutterBottom>
                     The problem, worldwide
@@ -296,7 +296,7 @@ export default function AboutUs() {
                     </Grid>
                 </Card>
             </Box>
-                        {/* Why this project matters, and how it contributes to the UN SDGs */}
+            {/* Why this project matters, and how it contributes to the UN SDGs */}
             <Box component="section">
                 <Typography variant="h5" component="h2" gutterBottom>
                     Why this project matters

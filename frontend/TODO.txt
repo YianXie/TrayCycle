@@ -1,6 +1,6 @@
 TODOs:
 
-Dashboard filters: add date range (with presets), station and dish, kept in the URL so views can be shared. StatsParams already has these fields; nothing uses them.
+[DONE] Dashboard filters: add date range (with presets), station and dish, kept in the URL so views can be shared. StatsParams already has these fields; nothing uses them.
 Per-dish daily trends (dishes[].daily) and daily average waste % are returned by the API but never shown.
 A captures review and labelling page: a paginated list filtered by needs_review, plus a form that posts a corrected label. This is what makes the stats trustworthy.
 Overproduction logging, plus admin screens for dishes, stations and menus, so staff can stop using Django admin.

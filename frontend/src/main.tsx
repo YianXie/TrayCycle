@@ -4,7 +4,6 @@
  * Sets up the theme, authentication context, and router for the application.
  * Renders the application into the root DOM element.
  */
-
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import { StrictMode } from "react";

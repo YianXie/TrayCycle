@@ -5,7 +5,6 @@
  * Uses Toolpad's ReactRouterAppProvider and DashboardLayout to structure the application.
  * Displays the current page title based on the route and renders the corresponding page content.
  */
-
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";

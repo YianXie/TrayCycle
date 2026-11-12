@@ -5,7 +5,6 @@
  * Each bar represents a dish, and the segments of the bar represent the percentage of bowls in each waste bucket (0%, 25%, 50%, 75%, 100%).
  * If no bowls are recorded for any dishes, a message is displayed instead of the chart.
  */
-
 import Typography from "@mui/material/Typography";
 import { alpha, useTheme } from "@mui/material/styles";
 import { BarChart } from "@mui/x-charts/BarChart";

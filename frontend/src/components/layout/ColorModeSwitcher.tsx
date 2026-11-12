@@ -4,7 +4,6 @@
  * Allows the user to switch between light, dark, and system (auto) color modes.
  * The selected mode is persisted in localStorage.
  */
-
 import BrightnessAutoIcon from "@mui/icons-material/BrightnessAuto";
 import CheckIcon from "@mui/icons-material/Check";
 import DarkModeIcon from "@mui/icons-material/DarkMode";

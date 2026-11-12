@@ -5,7 +5,6 @@
  * If the user is not authenticated, they are redirected to the login page.
  * Displays a loading message while checking authentication status.
  */
-
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 

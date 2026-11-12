@@ -5,7 +5,6 @@
  * Uses React context to share authentication state across the application.
  * Handles token storage, user data fetching, and error handling for authentication operations.
  */
-
 import axios from "axios";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";

@@ -9,10 +9,12 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { getStats } from "../api/stats";
 import DistributionChart from "../components/dashboard/DistributionChart";
 import KpiCard from "../components/dashboard/KpiCard";
+import { parseParams } from "../hooks/statFilters";
 import type { Stats } from "../types/stats";
 
 const kpis = (stats: Stats) => [
@@ -71,23 +73,22 @@ function BooButton() {
 export default function Dashboard() {
     const [status, setStatus] = useState<Status>("loading");
     const [stats, setStats] = useState<Stats | null>(null);
+    const [searchParams] = useSearchParams();
+    const key = searchParams.toString();
 
     useEffect(() => {
-        let ignore = false;
-        getStats({})
+        const controller = new AbortController();
+        setStatus("loading");
+        getStats(parseParams(new URLSearchParams(key)), controller.signal)
             .then((data) => {
-                if (!ignore) {
-                    setStats(data);
-                    setStatus("success");
-                }
+                setStats(data);
+                setStatus("success");
             })
             .catch(() => {
-                if (!ignore) setStatus("error");
+                if (!controller.signal.aborted) setStatus("error");
             });
-        return () => {
-            ignore = true;
-        };
-    }, []);
+        return () => controller.abort();
+    }, [key]);
 
     if (status === "loading") {
         return <Typography variant="body1">Loading...</Typography>;
@@ -138,7 +139,8 @@ export default function Dashboard() {
                         {
                             dataKey: "total_waste_kg",
                             label: "Waste (kg)",
-                            valueFormatter: (v) => `${v?.toFixed(2) ?? "0.00"} kg`,
+                            valueFormatter: (v) =>
+                                `${v?.toFixed(2) ?? "0.00"} kg`,
                         },
                     ]}
                     xAxis={[

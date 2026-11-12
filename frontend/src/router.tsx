@@ -4,7 +4,6 @@
  * Defines the routes and their corresponding components for the application.
  * Includes protected routes that require authentication, as well as public routes for login and logout.
  */
-
 import { Outlet, createBrowserRouter } from "react-router-dom";
 
 import Home from "./components/layout/AppShell";
