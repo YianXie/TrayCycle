@@ -75,7 +75,7 @@ function Stat({ value, label, detail, source }: StatProps) {
                         variant="caption"
                         underline="hover"
                     >
-                        Source
+                        Go To Source
                     </Link>
                 </Box>
             </CardContent>

@@ -1,6 +1,6 @@
 import api from "../api/client";
 import { MOCK_DATA } from "../mocks/data";
-import type { DailyRow, DishRow, Stats, StatsParams } from "../types/stats";
+import type { DailyRow, Stats, StatsParams } from "../types/stats";
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 

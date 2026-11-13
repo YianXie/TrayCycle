@@ -30,6 +30,11 @@ const kpis = (stats: Stats) => [
     },
 ];
 type Status = "loading" | "success" | "error";
+type RequestState = {
+    key: string;
+    status: Status;
+    stats: Stats | null;
+};
 const shortDay = (iso: string) => iso.slice(5);
 const MONTHS = [
     "Jan",
@@ -71,33 +76,42 @@ function BooButton() {
 }
 
 export default function Dashboard() {
-    const [status, setStatus] = useState<Status>("loading");
-    const [stats, setStats] = useState<Stats | null>(null);
     const [searchParams] = useSearchParams();
     const key = searchParams.toString();
+    const [request, setRequest] = useState<RequestState>({
+        key,
+        status: "loading",
+        stats: null,
+    });
 
     useEffect(() => {
         const controller = new AbortController();
-        setStatus("loading");
         getStats(parseParams(new URLSearchParams(key)), controller.signal)
             .then((data) => {
-                setStats(data);
-                setStatus("success");
+                setRequest({ key, status: "success", stats: data });
             })
             .catch(() => {
-                if (!controller.signal.aborted) setStatus("error");
+                if (!controller.signal.aborted) {
+                    setRequest({ key, status: "error", stats: null });
+                }
             });
         return () => controller.abort();
     }, [key]);
 
-    if (status === "loading") {
+    const currentRequest =
+        request.key === key
+            ? request
+            : { key, status: "loading" as const, stats: null };
+
+    if (currentRequest.status === "loading") {
         return <Typography variant="body1">Loading...</Typography>;
     }
 
-    if (status === "error") {
+    if (currentRequest.status === "error") {
         return <Typography variant="body1">Error fetching stats.</Typography>;
     }
 
+    const stats = currentRequest.stats;
     if (!stats) {
         return <Typography variant="body1">No stats available.</Typography>;
     }
