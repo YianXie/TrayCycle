@@ -14,7 +14,9 @@ import { useSearchParams } from "react-router-dom";
 import { getStats } from "../api/stats";
 import DistributionChart from "../components/dashboard/DistributionChart";
 import KpiCard from "../components/dashboard/KpiCard";
-import { parseParams } from "../hooks/statFilters";
+import StatsFilters from "../components/dashboard/StatsFilters";
+import { parseParams, toSearch } from "../hooks/statFilters";
+import type { StatsParams } from "../types/stats";
 import type { Stats } from "../types/stats";
 
 const kpis = (stats: Stats) => [
@@ -76,8 +78,9 @@ function BooButton() {
 }
 
 export default function Dashboard() {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const key = searchParams.toString();
+    const params = parseParams(new URLSearchParams(key));
     const [request, setRequest] = useState<RequestState>({
         key,
         status: "loading",
@@ -97,29 +100,39 @@ export default function Dashboard() {
             });
         return () => controller.abort();
     }, [key]);
-
+    const update = (patch: Partial<StatsParams>) =>
+        setSearchParams(toSearch({ ...params, ...patch }));
     const currentRequest =
         request.key === key
             ? request
             : { key, status: "loading" as const, stats: null };
 
+    let body;
     if (currentRequest.status === "loading") {
-        return <Typography variant="body1">Loading...</Typography>;
+        body = <Typography variant="body1">Loading...</Typography>;
+    } else if (currentRequest.status === "error") {
+        body = <Typography variant="body1">Error fetching stats.</Typography>;
+    } else if (!currentRequest.stats) {
+        body = <Typography variant="body1">No stats available.</Typography>;
+    } else if (currentRequest.stats.bowl_count === 0) {
+        body = (
+            <Typography color="text.secondary">
+                No captures in this range.
+            </Typography>
+        );
+    } else {
+        body = <StatsContent stats={currentRequest.stats} />;
     }
 
-    if (currentRequest.status === "error") {
-        return <Typography variant="body1">Error fetching stats.</Typography>;
-    }
+    return (
+        <>
+            <StatsFilters params={params} onChange={update} />
+            <Box sx={{ mt: 3 }}>{body}</Box>
+        </>
+    );
+}
 
-    const stats = currentRequest.stats;
-    if (!stats) {
-        return <Typography variant="body1">No stats available.</Typography>;
-    }
-
-    if (stats.bowl_count === 0) {
-        return <Typography color="text.secondary">No captures yet.</Typography>;
-    }
-
+function StatsContent({ stats }: { stats: Stats }) {
     const firstDay = stats.daily.at(0)?.date;
     const lastDay = stats.daily.at(-1)?.date;
 
