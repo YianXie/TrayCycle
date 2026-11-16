@@ -1,3 +1,10 @@
+/**
+ * ProtectedRoute component for the TriCycle web application.
+ *
+ * Wraps around child components and checks if the user is authenticated.
+ * If the user is not authenticated, they are redirected to the login page.
+ * Displays a loading message while checking authentication status.
+ */
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 

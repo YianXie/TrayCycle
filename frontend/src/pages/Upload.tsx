@@ -4,6 +4,8 @@
  * Displays a box for users to upload their files
  * Allows the preview of the images before upload
  * Upload button to upload to server
+ *
+ * Not used anymore because of the phone policy, but kept for future use
  */
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";

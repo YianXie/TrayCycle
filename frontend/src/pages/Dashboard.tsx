@@ -9,10 +9,14 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { getStats } from "../api/stats";
 import DistributionChart from "../components/dashboard/DistributionChart";
 import KpiCard from "../components/dashboard/KpiCard";
+import StatsFilters from "../components/dashboard/StatsFilters";
+import { parseParams, toSearch } from "../hooks/statFilters";
+import type { StatsParams } from "../types/stats";
 import type { Stats } from "../types/stats";
 
 const kpis = (stats: Stats) => [
@@ -28,6 +32,11 @@ const kpis = (stats: Stats) => [
     },
 ];
 type Status = "loading" | "success" | "error";
+type RequestState = {
+    key: string;
+    status: Status;
+    stats: Stats | null;
+};
 const shortDay = (iso: string) => iso.slice(5);
 const MONTHS = [
     "Jan",
@@ -61,7 +70,7 @@ function BooButton() {
             onClick={() => setBooed(!booed)}
             startIcon={booed ? "🍅" : "👎"}
             size="small"
-            sx={{ borderRadius: 20, textTransform: "none" }} // Rounded pill shape, clean text
+            sx={{ borderRadius: 20, textTransform: "none" }}
         >
             {booed ? "Booed!" : "Boo"}
         </Button>
@@ -69,42 +78,61 @@ function BooButton() {
 }
 
 export default function Dashboard() {
-    const [status, setStatus] = useState<Status>("loading");
-    const [stats, setStats] = useState<Stats | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const key = searchParams.toString();
+    const params = parseParams(new URLSearchParams(key));
+    const [request, setRequest] = useState<RequestState>({
+        key,
+        status: "loading",
+        stats: null,
+    });
 
     useEffect(() => {
-        let ignore = false;
-        getStats({})
+        const controller = new AbortController();
+        getStats(parseParams(new URLSearchParams(key)), controller.signal)
             .then((data) => {
-                if (!ignore) {
-                    setStats(data);
-                    setStatus("success");
-                }
+                setRequest({ key, status: "success", stats: data });
             })
             .catch(() => {
-                if (!ignore) setStatus("error");
+                if (!controller.signal.aborted) {
+                    setRequest({ key, status: "error", stats: null });
+                }
             });
-        return () => {
-            ignore = true;
-        };
-    }, []);
+        return () => controller.abort();
+    }, [key]);
+    const update = (patch: Partial<StatsParams>) =>
+        setSearchParams(toSearch({ ...params, ...patch }));
+    const currentRequest =
+        request.key === key
+            ? request
+            : { key, status: "loading" as const, stats: null };
 
-    if (status === "loading") {
-        return <Typography variant="body1">Loading...</Typography>;
+    let body;
+    if (currentRequest.status === "loading") {
+        body = <Typography variant="body1">Loading...</Typography>;
+    } else if (currentRequest.status === "error") {
+        body = <Typography variant="body1">Error fetching stats.</Typography>;
+    } else if (!currentRequest.stats) {
+        body = <Typography variant="body1">No stats available.</Typography>;
+    } else if (currentRequest.stats.bowl_count === 0) {
+        body = (
+            <Typography color="text.secondary">
+                No captures in this range.
+            </Typography>
+        );
+    } else {
+        body = <StatsContent stats={currentRequest.stats} />;
     }
 
-    if (status === "error") {
-        return <Typography variant="body1">Error fetching stats.</Typography>;
-    }
+    return (
+        <>
+            <StatsFilters params={params} onChange={update} />
+            <Box sx={{ mt: 3 }}>{body}</Box>
+        </>
+    );
+}
 
-    if (!stats) {
-        return <Typography variant="body1">No stats available.</Typography>;
-    }
-
-    if (stats.bowl_count === 0) {
-        return <Typography color="text.secondary">No captures yet.</Typography>;
-    }
-
+function StatsContent({ stats }: { stats: Stats }) {
     const firstDay = stats.daily.at(0)?.date;
     const lastDay = stats.daily.at(-1)?.date;
 
@@ -138,7 +166,8 @@ export default function Dashboard() {
                         {
                             dataKey: "total_waste_kg",
                             label: "Waste (kg)",
-                            valueFormatter: (v) => `${v?.toFixed(2)} kg`,
+                            valueFormatter: (v) =>
+                                `${v?.toFixed(2) ?? "0.00"} kg`,
                         },
                     ]}
                     xAxis={[

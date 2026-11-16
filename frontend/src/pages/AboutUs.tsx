@@ -75,7 +75,7 @@ function Stat({ value, label, detail, source }: StatProps) {
                         variant="caption"
                         underline="hover"
                     >
-                        Source
+                        Go To Source
                     </Link>
                 </Box>
             </CardContent>
@@ -199,6 +199,7 @@ export default function AboutUs() {
                         `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent 70%)`,
                 }}
             >
+                {/* Display the TriCycle logo */}
                 <Box
                     component="img"
                     src={TrayCycleLogo}
@@ -217,13 +218,14 @@ export default function AboutUs() {
                         color="text.secondary"
                         sx={{ maxWidth: "67ch" }}
                     >
-                        A camera-based plate-waste tracker for the SAS
-                        cafeteria. Measures what gets thrown away, so the
-                        kitchen knows what to change.
+                        {/* Description of the TriCycle project */}A
+                        camera-based plate-waste tracker for the SAS cafeteria.
+                        Measures what gets thrown away, so the kitchen knows
+                        what to change.
                     </Typography>
                 </Box>
             </Box>
-
+            {/* Facts about the problem that we are addressing */}
             <Box component="section">
                 <Typography variant="h5" component="h2" gutterBottom>
                     The problem, worldwide
@@ -260,6 +262,7 @@ export default function AboutUs() {
                         boxShadow: "none",
                     }}
                 >
+                    {/* Description of the UN SDG 12 */}
                     <Chip label="UN SDG 12" color="primary" size="small" />
                     <Typography
                         variant="h5"
@@ -285,7 +288,7 @@ export default function AboutUs() {
                                         rel="noopener noreferrer"
                                         underline="hover"
                                     >
-                                        Source
+                                        Go to source
                                     </Link>
                                 </Typography>
                             </Grid>
@@ -293,7 +296,7 @@ export default function AboutUs() {
                     </Grid>
                 </Card>
             </Box>
-
+            {/* Why this project matters, and how it contributes to the UN SDGs */}
             <Box component="section">
                 <Typography variant="h5" component="h2" gutterBottom>
                     Why this project matters
