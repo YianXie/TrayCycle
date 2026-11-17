@@ -35,8 +35,9 @@ export default function Login() {
         setSubmitting(true);
         try {
             await login(username, password);
-        } catch {
-            setError("Invalid username or password.");
+        } catch (error) {
+            console.error("Login failed:", error);
+            throw error;
         } finally {
             setSubmitting(false);
         }
