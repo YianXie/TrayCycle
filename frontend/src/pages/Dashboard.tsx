@@ -183,7 +183,7 @@ function StatsContent({ stats }: { stats: Stats }) {
                         ? `${dayLabel(firstDay)} - ${dayLabel(lastDay)}`
                         : "All captures"}
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 2, md: 3 }}>
                     {kpis(stats).map((k) => (
                         <Grid key={k.label} size={{ xs: 12, sm: 6, md: 3 }}>
                             <KpiCard {...k} />
@@ -213,30 +213,32 @@ function StatsContent({ stats }: { stats: Stats }) {
                             valueFormatter: shortDay,
                         },
                     ]}
-                    yAxis={[{ label: "kg" }]}
+                    yAxis={[{ width: 34, tickLabelStyle: { fontSize: 11 } }]}
                 />
             </Box>
-            <Box component="section" sx={{ mt: 4 }}>
+            <Box component="section" sx={{ mt: { xs: 3, md: 4 }}}>
                 <Typography variant="h5" component="h2" gutterBottom>
                     Biggest food offenders
                 </Typography>
                 <Grid container spacing={3}>
-                    {stats.dishes.map((dish) => (
-                        <Grid
-                            key={dish.dish_id}
-                            size={{ xs: 12, sm: 6, md: 6 }}
-                        >
-                            <KpiCard
-                                value={`${dish.total_waste_kg.toFixed(2)} kg`}
-                                label={dish.dish_name}
-                                hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
-                                action={<BooButton />}
-                            />
-                        </Grid>
-                    ))}
+                    {stats.dishes
+                        .filter((d) => d.bowl_count > 0)
+                        .map((dish) => (
+                            <Grid
+                                key={dish.dish_id}
+                                size={{ xs: 12, sm: 6, md: 6 }}
+                            >
+                                <KpiCard
+                                    value={`${dish.total_waste_kg.toFixed(2)} kg`}
+                                    label={dish.dish_name}
+                                    hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
+                                    action={<BooButton />}
+                                />
+                            </Grid>
+                        ))}
                 </Grid>
             </Box>
-            <Box component="section" sx={{ mt: 4 }}>
+            <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>
                     How much of each bowl wasted
                 </Typography>

@@ -183,15 +183,21 @@ export default function AboutUs() {
         },
     ];
     return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <Box
+            sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: { xs: 4, sm: 6 },
+            }}
+        >
             <Box
                 component="section"
                 sx={{
                     display: "flex",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: { xs: 5, md: 7 },
-                    p: { xs: 3, md: 4 },
+                    gap: { xs: 3, md: 5 },
+                    p: { xs: 2, md: 4 },
                     borderRadius: 3,
                     border: "1px solid",
                     borderColor: "divider",
@@ -255,7 +261,7 @@ export default function AboutUs() {
             <Box component="section">
                 <Card
                     sx={{
-                        p: { xs: 2.5, md: 3 },
+                        p: { xs: 2, md: 3 },
                         bgcolor: "action.hover",
                         border: "1px solid",
                         borderColor: "divider",
