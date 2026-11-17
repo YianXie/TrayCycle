@@ -216,7 +216,7 @@ function StatsContent({ stats }: { stats: Stats }) {
                     yAxis={[{ width: 34, tickLabelStyle: { fontSize: 11 } }]}
                 />
             </Box>
-            <Box component="section" sx={{ mt: { xs: 3, md: 4 }}}>
+            <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>
                     Biggest food offenders
                 </Typography>

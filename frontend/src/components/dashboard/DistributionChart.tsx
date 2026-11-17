@@ -42,12 +42,6 @@ function toRows(dishes: DishRow[]): DistributionRow[] {
     });
 }
 
-const SERIES = BUCKETS.map((bucket) => ({
-    dataKey: `b${bucket}`,
-    label: BUCKET_LABELS[bucket],
-    stack: "waste",
-}));
-
 export default function DistributionChart({ dishes }: { dishes: DishRow[] }) {
     const theme = useTheme();
     const colors = BUCKETS.map((_, i) =>
@@ -63,10 +57,6 @@ export default function DistributionChart({ dishes }: { dishes: DishRow[] }) {
     const longestName = rows.reduce(
         (max, row) => Math.max(max, row.dish.length),
         0
-    );
-    const leftMargin = Math.min(
-        180,
-        Math.max(80, Math.round(longestName * 6.5) + 16)
     );
     return (
         <Box>
