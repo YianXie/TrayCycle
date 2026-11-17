@@ -54,10 +54,6 @@ export default function DistributionChart({ dishes }: { dishes: DishRow[] }) {
             <Typography color="text.secondary">No bowls recorded.</Typography>
         );
     }
-    const longestName = rows.reduce(
-        (max, row) => Math.max(max, row.dish.length),
-        0
-    );
     return (
         <Box>
             <Stack
