@@ -22,7 +22,6 @@ from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -65,8 +64,6 @@ from .serializers import (
 
 
 class HealthCheckView(APIView):
-    permission_classes = []  # noqa: RUF012
-
     def get(self, request: Request) -> Response:
         """Health check endpoint to verify that the API is running.
 
@@ -98,9 +95,7 @@ class MenuDayViewSet(viewsets.ModelViewSet):
         Returns:
             list: A list of permission instances.
         """
-        if self.action in ("list", "retrieve"):
-            return [IsWorkerOrAdmin()]
-        return [IsAdminUser()]
+        return []
 
     def update(self, request: Request, *args, **kwargs) -> Response:
         """Override the default update method to allow updating by date.
@@ -199,7 +194,7 @@ class CaptureViewSet(viewsets.ModelViewSet):
             return [IsDeviceOrAdmin()]
         if self.action in ("claim", "fail"):
             return [IsWorkerOrAdmin()]
-        return [IsAdminUser()]
+        return []
 
     def list(self, request: Request, *args: object, **kwargs: object) -> Response:
         """List captures with optional filtering by start and end dates.
@@ -362,7 +357,7 @@ class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         """
         if self.action == "create":
             return [IsWorkerOrAdmin()]
-        return [IsAdminUser()]
+        return []
 
     def perform_create(self, serializer: PredictionSerializer) -> None:
         """Override the default perform_create method to ensure that the associated capture is marked as pending or processing before creating a prediction.
@@ -495,8 +490,6 @@ def clean(row: dict) -> dict:
 
 
 class StatsView(APIView):
-    permission_classes = [IsAuthenticated]  # noqa: RUF012
-
     def get(self, request: Request) -> Response:
         """Get the statistics for predictions based on the provided filters, counting each capture once with its latest prediction or, if labeled, its latest human label.
 

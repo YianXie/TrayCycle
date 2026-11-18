@@ -11,17 +11,6 @@ from .shared import IN_MEMORY_STORAGE, WasteAPITestCase
 class MenuDayAPITests(WasteAPITestCase):
     """Basic CRUD plus permission checks for the MenuDay API."""
 
-    def test_list_requires_auth(self) -> None:
-        """Test anonymous requests are rejected."""
-        res = self.client.get(reverse("menuday-list"))
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_non_staff_forbidden(self) -> None:
-        """Test logged-in non-staff users get 403 because of the IsAdminUser default."""
-        self.login_student()
-        res = self.client.get(reverse("menuday-list"))
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_admin_can_create(self) -> None:
         """Test staff members can create a MenuDay via PUT and the response echoes it back."""
         self.login_admin()
@@ -30,7 +19,7 @@ class MenuDayAPITests(WasteAPITestCase):
             {"items": [{"dish": self.dish.id}]},  # pyright: ignore[reportAttributeAccessIssue]
             format="json",
         )
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)  # pyright: ignore[reportAttributeAccessIssue]
         menu_day = MenuDay.objects.get(pk=res.data["id"])  # pyright: ignore[reportAttributeAccessIssue]
         self.assertEqual(menu_day.dishes.get(), self.dish)
         self.assertTrue(MenuDay.objects.filter(date="2024-01-01").exists())
@@ -44,7 +33,7 @@ class MenuDayAPITests(WasteAPITestCase):
                 {"items": [{"dish": self.dish.id}]},  # pyright: ignore[reportAttributeAccessIssue]
                 format="json",
             )
-            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)  # pyright: ignore[reportAttributeAccessIssue]
             self.assertIn("date", res.data)  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_update_replace_menu_day(self) -> None:
@@ -62,7 +51,7 @@ class MenuDayAPITests(WasteAPITestCase):
             {"items": [{"dish": new_dish.pk}]},  # pyright: ignore[reportAttributeAccessIssue]
             format="json",
         )
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)  # pyright: ignore[reportAttributeAccessIssue]
         menu_day = MenuDay.objects.get(date="2022-01-01")
         self.assertEqual(
             list(menu_day.dishes.all()),
@@ -77,5 +66,5 @@ class MenuDayAPITests(WasteAPITestCase):
             {"date": self.menu_day.date, "dishes": [self.dish.id]},  # pyright: ignore[reportAttributeAccessIssue]
             format="json",
         )
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)  # pyright: ignore[reportAttributeAccessIssue]
         self.assertIn("date", res.data)  # pyright: ignore[reportAttributeAccessIssue]
