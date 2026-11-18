@@ -1,7 +1,13 @@
+from typing import TYPE_CHECKING
+
 from rest_framework.permissions import BasePermission, IsAdminUser
 
 from .constants import WORKER_GROUP_NAME
 from .models import Device
+
+if TYPE_CHECKING:
+    from rest_framework.request import Request
+    from rest_framework.views import APIView
 
 
 class AllowAnyReadOrAdminWrite(BasePermission):
@@ -10,7 +16,7 @@ class AllowAnyReadOrAdminWrite(BasePermission):
     but require admin status (is_staff=True) for write operations.
     """
 
-    def has_permission(self, request, view) -> bool:  # type: ignore
+    def has_permission(self, request: Request, view: APIView) -> bool:  # type: ignore
         if request.method in ["GET", "HEAD", "OPTIONS"]:
             return True
         return IsAdminUser().has_permission(request, view)
@@ -19,7 +25,7 @@ class AllowAnyReadOrAdminWrite(BasePermission):
 class IsDeviceOrAdmin(BasePermission):
     """Allow requests from an authenticated camera device or a staff user."""
 
-    def has_permission(self, request, view) -> bool:  # type: ignore
+    def has_permission(self, request: Request, view: APIView) -> bool:  # type: ignore
         """Check if the request is from an authenticated camera device or a staff user.
 
         Args:
@@ -37,7 +43,7 @@ class IsDeviceOrAdmin(BasePermission):
 class IsWorkerOrAdmin(BasePermission):
     """Allow requests from an authenticated worker or a staff user."""
 
-    def has_permission(self, request, view) -> bool:  # type: ignore
+    def has_permission(self, request: Request, view: APIView) -> bool:  # type: ignore
         """Check if the request is from an authenticated worker or a staff user.
 
         Args:

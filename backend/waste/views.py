@@ -22,7 +22,7 @@ from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -97,7 +97,7 @@ class MenuDayViewSet(viewsets.ModelViewSet):
             list: A list of permission instances.
         """
         if self.action in ("list", "retrieve"):
-            return [AllowAny()]
+            return [IsWorkerOrAdmin()]
         return [IsAdminUser()]
 
     def update(self, request: Request, *args, **kwargs) -> Response:
@@ -136,6 +136,8 @@ class MenuDayViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+
+    permission_classes = [IsAdminUser]  # noqa: RUF012
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
         """Override the default create method to allow creation of a device with a generated token.
@@ -193,8 +195,6 @@ class CaptureViewSet(viewsets.ModelViewSet):
         Returns:
             list: A list of permission instances.
         """
-        if self.action in ("list", "retrieve"):
-            return [AllowAny()]
         if self.action == "create":
             return [IsDeviceOrAdmin()]
         if self.action in ("claim", "fail"):
@@ -360,11 +360,9 @@ class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         Returns:
             list: A list of permission instances.
         """
-        if self.action in ("list", "retrieve"):
-            return [AllowAny()]
         if self.action == "create":
             return [IsWorkerOrAdmin()]
-        return [IsAdminUser]
+        return [IsAdminUser()]
 
     def perform_create(self, serializer: PredictionSerializer) -> None:
         """Override the default perform_create method to ensure that the associated capture is marked as pending or processing before creating a prediction.
@@ -405,6 +403,8 @@ class LabelViewSet(viewsets.ModelViewSet):
     queryset = Label.objects.all()
     serializer_class = LabelSerializer
 
+    permission_classes = [IsAdminUser]  # noqa: RUF012
+
     def perform_create(self, serializer: LabelSerializer) -> None:
         """Override the default perform_create method to set the labeler field to the current user.
 
@@ -417,6 +417,8 @@ class LabelViewSet(viewsets.ModelViewSet):
 class OverproductionLogViewSet(viewsets.ModelViewSet):
     queryset = OverproductionLog.objects.all()
     serializer_class = OverproductionLogSerializer
+
+    permission_classes = [IsAdminUser]  # noqa: RUF012
 
     def perform_create(self, serializer: OverproductionLogSerializer) -> None:
         """Override the default perform_create method to set the entered_by field to the current user.
