@@ -140,7 +140,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+        "waste.permissions.AllowAnyReadOrAdminWrite",
     ],
     "EXCEPTION_HANDLER": "waste.exceptions.custom_exception_handler",
     "DATETIME_FORMAT": "iso-8601",

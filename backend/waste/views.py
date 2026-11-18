@@ -22,6 +22,7 @@ from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -95,7 +96,9 @@ class MenuDayViewSet(viewsets.ModelViewSet):
         Returns:
             list: A list of permission instances.
         """
-        return []
+        if self.action in ("list", "retrieve"):
+            return [AllowAny()]
+        return [IsAdminUser()]
 
     def update(self, request: Request, *args, **kwargs) -> Response:
         """Override the default update method to allow updating by date.
@@ -190,11 +193,13 @@ class CaptureViewSet(viewsets.ModelViewSet):
         Returns:
             list: A list of permission instances.
         """
+        if self.action in ("list", "retrieve"):
+            return [AllowAny()]
         if self.action == "create":
             return [IsDeviceOrAdmin()]
         if self.action in ("claim", "fail"):
             return [IsWorkerOrAdmin()]
-        return []
+        return [IsAdminUser()]
 
     def list(self, request: Request, *args: object, **kwargs: object) -> Response:
         """List captures with optional filtering by start and end dates.
@@ -355,9 +360,11 @@ class PredictionViewSet(mixins.CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         Returns:
             list: A list of permission instances.
         """
+        if self.action in ("list", "retrieve"):
+            return [AllowAny()]
         if self.action == "create":
             return [IsWorkerOrAdmin()]
-        return []
+        return [IsAdminUser]
 
     def perform_create(self, serializer: PredictionSerializer) -> None:
         """Override the default perform_create method to ensure that the associated capture is marked as pending or processing before creating a prediction.
