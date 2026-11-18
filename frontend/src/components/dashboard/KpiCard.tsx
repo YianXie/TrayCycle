@@ -48,6 +48,7 @@ function KpiCard({ value, label, hint, action }: KpiCardProps) {
                     variant="h3"
                     component="p"
                     sx={{
+                        fontSize: { xs: "1.75rem", md: "2.5rem" },
                         fontWeight: 700,
                         lineHeight: 1.05,
                         letterSpacing: "-0.03em",

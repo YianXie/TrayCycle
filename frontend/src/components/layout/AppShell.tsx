@@ -7,7 +7,6 @@
  */
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { Account, PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
@@ -71,7 +70,7 @@ export default function Home() {
                     <img
                         src={TrayCycleLogo}
                         alt="TrayCycle logo"
-                        style={{ height: 75, width: "auto" }}
+                        style={{ height: 40, width: "auto" }}
                     />
                 ),
                 title: "TrayCycle",
@@ -90,19 +89,12 @@ export default function Home() {
             }}
         >
             <DashboardLayout slots={{ toolbarActions: ToolbarActions }}>
-                <Box
-                    sx={{
-                        py: 4,
-                        px: 3,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2,
-                    }}
+                <PageContainer
+                    title={title}
+                    sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}
                 >
-                    <PageContainer title={title}>
-                        <Outlet />
-                    </PageContainer>
-                </Box>
+                    <Outlet />
+                </PageContainer>
             </DashboardLayout>
         </ReactRouterAppProvider>
     );

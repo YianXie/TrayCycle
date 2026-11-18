@@ -84,6 +84,7 @@ export default function StatsFilters({ params, onChange }: StatsFiltersProps) {
                         onChange({ start: event.target.value || undefined })
                     }
                     slotProps={{ inputLabel: { shrink: true } }}
+                    fullWidth
                 />
                 <TextField
                     label="To"
@@ -94,6 +95,7 @@ export default function StatsFilters({ params, onChange }: StatsFiltersProps) {
                         onChange({ end: event.target.value || undefined })
                     }
                     slotProps={{ inputLabel: { shrink: true } }}
+                    fullWidth
                 />
             </Stack>
         </Paper>

@@ -3,11 +3,13 @@
  *
  * Displays food wasted today, trends and other statistical information that the api returns
  */
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { LineChart } from "@mui/x-charts/LineChart";
+import { isAxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -36,6 +38,7 @@ type RequestState = {
     key: string;
     status: Status;
     stats: Stats | null;
+    error?: string;
 };
 const shortDay = (iso: string) => iso.slice(5);
 const MONTHS = [
@@ -56,6 +59,20 @@ const MONTHS = [
 const dayLabel = (iso: string) => {
     const [y, m, d] = iso.split("-");
     return `${Number(d)} ${MONTHS[Number(m) - 1]} ${y}`;
+};
+
+const describeError = (error: unknown): string => {
+    if (!isAxiosError(error)) return "Something went wrong.";
+    if (error.code === "ERR_NETWORK") return "Can't reach the server.";
+    if (error.code === "ECONNABORTED")
+        return "The server took too long to respond.";
+    const status = error.response?.status;
+    if (status === 403) return "Your session expired.";
+    if (status && status >= 500) return "The server is having trouble.";
+    if (status === 401) return "Wrong username or password.";
+    if (error.response?.status)
+        return `Login failed (${error.response.status}).`;
+    return "Something went wrong.";
 };
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -80,26 +97,34 @@ function BooButton() {
 export default function Dashboard() {
     const [searchParams, setSearchParams] = useSearchParams();
     const key = searchParams.toString();
+    const [attempt, setAttempt] = useState(0);
     const params = parseParams(new URLSearchParams(key));
     const [request, setRequest] = useState<RequestState>({
         key,
         status: "loading",
         stats: null,
     });
-
+    const retry = () => {
+        setRequest({ key, status: "loading", stats: null });
+        setAttempt((n) => n + 1);
+    };
     useEffect(() => {
         const controller = new AbortController();
         getStats(parseParams(new URLSearchParams(key)), controller.signal)
             .then((data) => {
                 setRequest({ key, status: "success", stats: data });
             })
-            .catch(() => {
-                if (!controller.signal.aborted) {
-                    setRequest({ key, status: "error", stats: null });
-                }
+            .catch((error) => {
+                if (controller.signal.aborted) return;
+                setRequest({
+                    key,
+                    status: "error",
+                    stats: null,
+                    error: describeError(error),
+                });
             });
         return () => controller.abort();
-    }, [key]);
+    }, [key, attempt]);
     const update = (patch: Partial<StatsParams>) =>
         setSearchParams(toSearch({ ...params, ...patch }));
     const currentRequest =
@@ -111,7 +136,18 @@ export default function Dashboard() {
     if (currentRequest.status === "loading") {
         body = <Typography variant="body1">Loading...</Typography>;
     } else if (currentRequest.status === "error") {
-        body = <Typography variant="body1">Error fetching stats.</Typography>;
+        body = (
+            <Alert
+                severity="error"
+                action={
+                    <Button color="inherit" size="small" onClick={retry}>
+                        Retry
+                    </Button>
+                }
+            >
+                {currentRequest.error ?? "Couldn't load statistics."}
+            </Alert>
+        );
     } else if (!currentRequest.stats) {
         body = <Typography variant="body1">No stats available.</Typography>;
     } else if (currentRequest.stats.bowl_count === 0) {
@@ -147,7 +183,7 @@ function StatsContent({ stats }: { stats: Stats }) {
                         ? `${dayLabel(firstDay)} - ${dayLabel(lastDay)}`
                         : "All captures"}
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 2, md: 3 }}>
                     {kpis(stats).map((k) => (
                         <Grid key={k.label} size={{ xs: 12, sm: 6, md: 3 }}>
                             <KpiCard {...k} />
@@ -177,30 +213,32 @@ function StatsContent({ stats }: { stats: Stats }) {
                             valueFormatter: shortDay,
                         },
                     ]}
-                    yAxis={[{ label: "kg" }]}
+                    yAxis={[{ width: 34, tickLabelStyle: { fontSize: 11 } }]}
                 />
             </Box>
-            <Box component="section" sx={{ mt: 4 }}>
+            <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>
                     Biggest food offenders
                 </Typography>
                 <Grid container spacing={3}>
-                    {stats.dishes.map((dish) => (
-                        <Grid
-                            key={dish.dish_id}
-                            size={{ xs: 12, sm: 6, md: 6 }}
-                        >
-                            <KpiCard
-                                value={`${dish.total_waste_kg.toFixed(2)} kg`}
-                                label={dish.dish_name}
-                                hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
-                                action={<BooButton />}
-                            />
-                        </Grid>
-                    ))}
+                    {stats.dishes
+                        .filter((d) => d.bowl_count > 0)
+                        .map((dish) => (
+                            <Grid
+                                key={dish.dish_id}
+                                size={{ xs: 12, sm: 6, md: 6 }}
+                            >
+                                <KpiCard
+                                    value={`${dish.total_waste_kg.toFixed(2)} kg`}
+                                    label={dish.dish_name}
+                                    hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
+                                    action={<BooButton />}
+                                />
+                            </Grid>
+                        ))}
                 </Grid>
             </Box>
-            <Box component="section" sx={{ mt: 4 }}>
+            <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>
                     How much of each bowl wasted
                 </Typography>

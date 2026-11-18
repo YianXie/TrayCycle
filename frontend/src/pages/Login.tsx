@@ -35,8 +35,9 @@ export default function Login() {
         setSubmitting(true);
         try {
             await login(username, password);
-        } catch {
-            setError("Invalid username or password.");
+        } catch (error) {
+            console.error("Login failed:", error);
+            throw error;
         } finally {
             setSubmitting(false);
         }
@@ -45,7 +46,7 @@ export default function Login() {
     return (
         <Box
             sx={{
-                minHeight: "100vh",
+                minHeight: "100dvh",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -55,7 +56,7 @@ export default function Login() {
             <Paper
                 component="form"
                 onSubmit={handleSubmit}
-                sx={{ p: 4, width: "100%", maxWidth: 360 }}
+                sx={{ p: { xs: 2.5, sm: 4 }, width: "100%", maxWidth: 360 }}
             >
                 <Typography variant="h5" gutterBottom>
                     Log in
