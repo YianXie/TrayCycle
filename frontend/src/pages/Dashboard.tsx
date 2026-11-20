@@ -216,7 +216,9 @@ function StatsContent({ stats }: { stats: Stats }) {
                             valueFormatter: shortDay,
                         },
                     ]}
-                    yAxis={[{ min: 0, width: 34, tickLabelStyle: { fontSize: 11 } }]}
+                    yAxis={[
+                        { min: 0, width: 34, tickLabelStyle: { fontSize: 11 } },
+                    ]}
                 />
             </Box>
             <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
@@ -225,26 +227,27 @@ function StatsContent({ stats }: { stats: Stats }) {
                 </Typography>
                 {visible.length === 0 ? (
                     <Typography color="text.secondary">
-                    No waste recorded — every bowl was finished.
+                        No waste recorded — every bowl was finished.
                     </Typography>
                 ) : (
-                <Grid container spacing={3}>
-                    {stats.dishes
-                        .filter((d) => d.total_waste_kg > 0)
-                        .map((dish) => (
-                            <Grid
-                                key={dish.dish_id}
-                                size={{ xs: 12, sm: 6, md: 6 }}
-                            >
-                                <KpiCard
-                                    value={kg(dish.total_waste_kg)}
-                                    label={dish.dish_name}
-                                    hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
-                                    action={<BooButton />}
-                                />
-                            </Grid>
-                        ))}
-                </Grid>)}
+                    <Grid container spacing={3}>
+                        {stats.dishes
+                            .filter((d) => d.total_waste_kg > 0)
+                            .map((dish) => (
+                                <Grid
+                                    key={dish.dish_id}
+                                    size={{ xs: 12, sm: 6, md: 6 }}
+                                >
+                                    <KpiCard
+                                        value={kg(dish.total_waste_kg)}
+                                        label={dish.dish_name}
+                                        hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
+                                        action={<BooButton />}
+                                    />
+                                </Grid>
+                            ))}
+                    </Grid>
+                )}
             </Box>
             <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>
