@@ -1,8 +1,8 @@
 export const MOCK_DATA = {
-    bowl_count: 67,
-    average_waste_percent: 40.299,
-    total_waste_kg: 8.36,
-    average_waste_kg: 0.125,
+    bowl_count: 68,
+    average_waste_percent: 40.074,
+    total_waste_kg: 8.361,
+    average_waste_kg: 0.123,
     daily: [
         {
             date: "2026-10-26",
@@ -48,10 +48,24 @@ export const MOCK_DATA = {
         },
         {
             date: "2026-11-01",
-            bowl_count: 10,
-            average_waste_percent: 35,
-            total_waste_kg: 1.06,
-            average_waste_kg: 0.106,
+            bowl_count: 7,
+            average_waste_percent: 35.714,
+            total_waste_kg: 0.82,
+            average_waste_kg: 0.117,
+        },
+        {
+            date: "2026-11-19",
+            bowl_count: 3,
+            average_waste_percent: 33.333,
+            total_waste_kg: 0.24,
+            average_waste_kg: 0.08,
+        },
+        {
+            date: "2026-11-20",
+            bowl_count: 1,
+            average_waste_percent: 25,
+            total_waste_kg: 0.001,
+            average_waste_kg: 0.001,
         },
     ],
     dishes: [
@@ -238,7 +252,7 @@ export const MOCK_DATA = {
                     average_waste_kg: 0.09,
                 },
                 {
-                    date: "2026-11-01",
+                    date: "2026-11-19",
                     bowl_count: 3,
                     average_waste_percent: 33.333,
                     total_waste_kg: 0.24,
@@ -251,6 +265,26 @@ export const MOCK_DATA = {
                 "50": 6,
                 "75": 2,
                 "100": 2,
+            },
+        },
+        {
+            dish_id: 4,
+            dish_name: "Salad",
+            bowl_count: 1,
+            average_waste_percent: 25,
+            total_waste_kg: 0.001,
+            average_waste_kg: 0.001,
+            daily: [
+                {
+                    date: "2026-11-20",
+                    bowl_count: 1,
+                    average_waste_percent: 25,
+                    total_waste_kg: 0.001,
+                    average_waste_kg: 0.001,
+                },
+            ],
+            waste_bucket_distribution: {
+                "25": 1,
             },
         },
     ],
