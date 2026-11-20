@@ -9,17 +9,17 @@ Loading, error and empty states are bare text. Use skeletons shaped like the KPI
 Login error messages: tell “wrong credentials” apart from “can’t reach server” and other server errors. Also set the tab title on the Login page, mark the fields as errored, and add the logo.
 
 Distribution chart:
-Tooltips show raw floats like 33.3333%; add a valueFormatter.
-The legend labels “0%…100%” are ambiguous on a “% of bowls” axis; something like “0% left … all left” reads better.
-The lowest-opacity colors have poor contrast, especially in dark mode.
-The hard-coded margin.left of 120 can cut off long dish names.
+[DONE] Tooltips show raw floats like 33.3333%; add a valueFormatter.
+[DONE] The legend labels “0%…100%” are ambiguous on a “% of bowls” axis; something like “0% left … all left” reads better.
+[DONE] The lowest-opacity colors have poor contrast, especially in dark mode.
+[DONE] The hard-coded margin.left of 120 can cut off long dish names.
 Daily line chart:
 The point scale squashes missing days together.
-The axis shows 10-26 while the subtitle shows 26 Oct 2026. Use one Intl.DateTimeFormat helper for both.
+[Rejected because the length allotted to the line chart is different than the subtitles, if they are in the same format, one will have some parts omitted and one will use too little space] The axis shows 10-26 while the subtitle shows 26 Oct 2026. Use one Intl.DateTimeFormat helper for both.
 [DONE] v?.toFixed(2) can print “undefined kg”.
 The “Boo” button saves nothing and has no toggle semantics for screen readers. Remove it, or replace it with something useful like “filter to this dish”.
 [DONE] KPI and stat cards highlight on hover, which makes them look clickable when they aren’t.
-Double padding: the wrapper Box plus PageContainer leaves too much padding, worst on mobile. Toolpad also overrides the logo’s height: 75.
+[DONE] Double padding: the wrapper Box plus PageContainer leaves too much padding, worst on mobile. Toolpad also overrides the logo’s height: 75.
 Accessibility:
 The nested <main> elements (see item 7).
 The heading hierarchy is off.

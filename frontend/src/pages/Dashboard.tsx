@@ -167,10 +167,13 @@ export default function Dashboard() {
         </>
     );
 }
+const kg = (n: number) =>
+    n > 0 && n < 0.01 ? "<0.01 kg" : `${n.toFixed(2)} kg`;
 
 function StatsContent({ stats }: { stats: Stats }) {
     const firstDay = stats.daily.at(0)?.date;
     const lastDay = stats.daily.at(-1)?.date;
+    const visible = stats.dishes.filter((dish) => dish.total_waste_kg > 0);
 
     return (
         <div>
@@ -213,30 +216,38 @@ function StatsContent({ stats }: { stats: Stats }) {
                             valueFormatter: shortDay,
                         },
                     ]}
-                    yAxis={[{ width: 34, tickLabelStyle: { fontSize: 11 } }]}
+                    yAxis={[
+                        { min: 0, width: 34, tickLabelStyle: { fontSize: 11 } },
+                    ]}
                 />
             </Box>
             <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>
                     Biggest food offenders
                 </Typography>
-                <Grid container spacing={3}>
-                    {stats.dishes
-                        .filter((d) => d.bowl_count > 0)
-                        .map((dish) => (
-                            <Grid
-                                key={dish.dish_id}
-                                size={{ xs: 12, sm: 6, md: 6 }}
-                            >
-                                <KpiCard
-                                    value={`${dish.total_waste_kg.toFixed(2)} kg`}
-                                    label={dish.dish_name}
-                                    hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
-                                    action={<BooButton />}
-                                />
-                            </Grid>
-                        ))}
-                </Grid>
+                {visible.length === 0 ? (
+                    <Typography color="text.secondary">
+                        No waste recorded — every bowl was finished.
+                    </Typography>
+                ) : (
+                    <Grid container spacing={3}>
+                        {stats.dishes
+                            .filter((d) => d.total_waste_kg > 0)
+                            .map((dish) => (
+                                <Grid
+                                    key={dish.dish_id}
+                                    size={{ xs: 12, sm: 6, md: 6 }}
+                                >
+                                    <KpiCard
+                                        value={kg(dish.total_waste_kg)}
+                                        label={dish.dish_name}
+                                        hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
+                                        action={<BooButton />}
+                                    />
+                                </Grid>
+                            ))}
+                    </Grid>
+                )}
             </Box>
             <Box component="section" sx={{ mt: { xs: 3, md: 4 } }}>
                 <Typography variant="h5" component="h2" gutterBottom>

@@ -74,7 +74,7 @@ export default function StatsFilters({ params, onChange }: StatsFiltersProps) {
                 </Button>
             ))}
 
-            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+            <Stack direction="row" spacing={1}>
                 <TextField
                     label="From"
                     type="date"
