@@ -95,7 +95,7 @@ class Worker:
                             )
                             menu_day_response.raise_for_status()
                             menu_cache[captured_at] = menu_day_response.json()
-                        dishes = menu_cache[captured_at]["dishes"] or []
+                        dishes = menu_cache[captured_at]["dishes_detail"] or []
 
                         image_url = capture["image"]
                         image_response = requests.get(image_url, timeout=5)
@@ -104,6 +104,9 @@ class Worker:
                         image.load()
                         try:
                             prediction = predictor.predict(image, dishes)
+                            print(
+                                f"Prediction for capture {capture['id']}: {prediction}"
+                            )
                         except ModelException as e:
                             # Model exception occurred, report failure to the server
                             try:

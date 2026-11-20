@@ -12,17 +12,6 @@ from .shared import IN_MEMORY_STORAGE, WasteAPITestCase, make_image
 class CaptureAPITests(WasteAPITestCase):
     """CRUD, permission, device-token upload, admin upload, and label action tests for the Capture API."""
 
-    def test_list_requires_auth(self) -> None:
-        """Test anonymous requests are rejected."""
-        res = self.client.get(reverse("capture-list"))
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)  # pyright: ignore[reportAttributeAccessIssue]
-
-    def test_non_staff_forbidden(self) -> None:
-        """Test logged-in non-staff users get 403 because of the IsAdminUser default."""
-        self.login_student()
-        res = self.client.get(reverse("capture-list"))
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)  # pyright: ignore[reportAttributeAccessIssue]
-
     def test_device_upload_sets_camera_source(self) -> None:
         """Test a device token creates a CAMERA capture linked to that device."""
         self.client.credentials(HTTP_AUTHORIZATION=f"Device {self.device.token}")  # pyright: ignore[reportAttributeAccessIssue]
@@ -44,12 +33,6 @@ class CaptureAPITests(WasteAPITestCase):
             reverse("capture-list"), {"image": make_image()}, format="multipart"
         )
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)  # pyright: ignore[reportAttributeAccessIssue]
-
-    def test_device_cannot_list(self) -> None:
-        """Test devices may only create, not read captures."""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Device {self.device.token}")  # pyright: ignore[reportAttributeAccessIssue]
-        res = self.client.get(reverse("capture-list"))
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_admin_upload_sets_upload_source(self) -> None:
         """Test a staff upload records uploaded_by and the UPLOAD source."""

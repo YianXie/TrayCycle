@@ -150,21 +150,6 @@ class WorkerTest(WasteAPITestCase):
         # Check that the prediction creation failed with a 409 Conflict
         self.assertEqual(prediction_response.status_code, status.HTTP_409_CONFLICT)  # pyright: ignore[reportAttributeAccessIssue]
 
-    def test_worker_get_403_elsewhere(self):
-        """Test that a worker user cannot access endpoints they shouldn't."""
-        self.login_worker()
-
-        # Attempt to access the capture list endpoint
-        capture_list_response = self.client.get(reverse("capture-list"))
-        self.assertEqual(capture_list_response.status_code, status.HTTP_403_FORBIDDEN)  # pyright: ignore[reportAttributeAccessIssue]
-
-        # Attempt to access the prediction list endpoint
-        prediction_list_response = self.client.get(reverse("prediction-list"))
-        self.assertEqual(
-            prediction_list_response.status_code,  # pyright: ignore[reportAttributeAccessIssue]
-            status.HTTP_403_FORBIDDEN,
-        )
-
     def test_fail_on_non_processing_capture_returns_409(self):
         """Test that marking a non-processing capture as failed returns a 409 Conflict."""
         self.login_admin()

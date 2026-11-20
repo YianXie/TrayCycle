@@ -22,7 +22,7 @@ from django.utils.dateparse import parse_date
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -65,8 +65,6 @@ from .serializers import (
 
 
 class HealthCheckView(APIView):
-    permission_classes = []  # noqa: RUF012
-
     def get(self, request: Request) -> Response:
         """Health check endpoint to verify that the API is running.
 
@@ -138,6 +136,8 @@ class MenuDayViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+
+    permission_classes = [IsAdminUser]  # noqa: RUF012
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
         """Override the default create method to allow creation of a device with a generated token.
@@ -403,6 +403,8 @@ class LabelViewSet(viewsets.ModelViewSet):
     queryset = Label.objects.all()
     serializer_class = LabelSerializer
 
+    permission_classes = [IsAdminUser]  # noqa: RUF012
+
     def perform_create(self, serializer: LabelSerializer) -> None:
         """Override the default perform_create method to set the labeler field to the current user.
 
@@ -415,6 +417,8 @@ class LabelViewSet(viewsets.ModelViewSet):
 class OverproductionLogViewSet(viewsets.ModelViewSet):
     queryset = OverproductionLog.objects.all()
     serializer_class = OverproductionLogSerializer
+
+    permission_classes = [IsAdminUser]  # noqa: RUF012
 
     def perform_create(self, serializer: OverproductionLogSerializer) -> None:
         """Override the default perform_create method to set the entered_by field to the current user.
@@ -495,8 +499,6 @@ def clean(row: dict) -> dict:
 
 
 class StatsView(APIView):
-    permission_classes = [IsAuthenticated]  # noqa: RUF012
-
     def get(self, request: Request) -> Response:
         """Get the statistics for predictions based on the provided filters, counting each capture once with its latest prediction or, if labeled, its latest human label.
 

@@ -234,7 +234,11 @@ Live site: [traycycle.org](https://traycycle.org)
 
 </details>
 
-### Raspberry Pi 5 Image Capture
+### Worker
+
+A Python process that automatically claim pending captures and fetch that day's menu. It uses the OpenAI clip-vit-base-patch32 model to label and classifies images.
+
+### Raspberry Pi 5
 
 WIP
 
@@ -274,6 +278,14 @@ uv sync  # sync the virtual environment
 uv run python manage.py migrate  # migrate database
 uv run python manage.py runserver
 ```
+
+### Worker
+
+```bash
+python -m worker.main  # start the worker process
+```
+
+It might take a minute to install the model's weights at the first start up. After that, the worker will automatically claim captures marked as pending.
 
 ### Database & Media Storage
 

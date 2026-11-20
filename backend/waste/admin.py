@@ -58,7 +58,6 @@ class CaptureModelAdmin(admin.ModelAdmin):
             queryset: The entries the admin selected.
         """
         try:
-            queryset = queryset.exclude(status=StatusChoices.DONE)
             updated: int = queryset.update(
                 claimed_at=None,
                 claimed_by=None,
