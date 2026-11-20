@@ -6,6 +6,7 @@
  * Displays the current page title based on the route and renders the corresponding page content.
  */
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import InfoIcon from "@mui/icons-material/Info";
 import PersonIcon from "@mui/icons-material/Person";
 import Stack from "@mui/material/Stack";
 import { Account, PageContainer } from "@toolpad/core";
@@ -26,9 +27,14 @@ const NAVIGATION: Navigation = [
         title: "Main Items",
     },
     {
-        segment: "dashboard",
-        title: "Dashboard",
+        segment: "overview",
+        title: "Overview",
         icon: <DashboardIcon />,
+    },
+    {
+        segment: "per-dish",
+        title: "Per-dish Breakdown",
+        icon: <InfoIcon />,
     },
     {
         segment: "about-us",
@@ -51,7 +57,8 @@ function ToolbarActions() {
 export default function Home() {
     const { pathname } = useLocation();
     const pages: Record<string, string> = {
-        "/dashboard": "Dashboard",
+        "/overview": "Overview",
+        "/per-dish": "Per-dish Breakdown",
         "/about-us": "About Us",
         "/": "Home",
     };
@@ -76,6 +83,7 @@ export default function Home() {
             <DashboardLayout slots={{ toolbarActions: ToolbarActions }}>
                 <PageContainer
                     title={title}
+                    breadcrumbs={[]}
                     sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}
                 >
                     <Outlet />
