@@ -2,7 +2,9 @@ import random
 import time
 from typing import TypedDict
 
+import torch
 from PIL import Image
+from transformers import CLIPModel, CLIPProcessor
 
 from worker.exceptions import ModelException
 
@@ -13,13 +15,14 @@ class PredictionResult(TypedDict):
     dish: int
     waste_bucket: int
     confidence: float
+    time: float
     model_version: str
 
 
 class Predictor:
     """A class representing a model predictor."""
 
-    MODEL_VERSION = "1.0.0"
+    MODEL = "openai/clip-vit-base-patch32"
 
     def __init__(self):
         """Initialize the Predictor class."""
@@ -37,17 +40,40 @@ class Predictor:
         Returns:
             PredictionResult: A dictionary containing the prediction results.
         """
-        time.sleep(2)
-
         if not dishes:
             raise ModelException("No dishes available for prediction.")
 
-        if random.random() < 0.1:  # 10% chance of failure
-            raise ModelException("Prediction failed due to a simulated error.")
+        start_time = time.time()
+
+        model = CLIPModel.from_pretrained(self.MODEL)
+        processor = CLIPProcessor.from_pretrained(self.MODEL)
+        model.eval()
+
+        labels = [dish["name"] for dish in dishes]
+
+        inputs = processor(
+            text=[f"A picture of {label}" for label in labels],
+            images=image,
+            return_tensors="pt",  # pyright: ignore[reportCallIssue]
+            padding=True,  # pyright: ignore[reportCallIssue]
+        )
+
+        with torch.no_grad():
+            outputs = model(**inputs)
+
+        probabilities = outputs.logits_per_image.softmax(dim=1)[0]
+        results = sorted(
+            zip(labels, probabilities.tolist()), key=lambda x: x[1], reverse=True
+        )
+
+        end_time = time.time()
 
         return {
-            "dish": random.choice(dishes),
+            "dish": next(
+                dish["id"] for dish in dishes if dish["name"] == results[0][0]
+            ),
             "waste_bucket": random.choice((0, 25, 50, 75, 100)),
-            "confidence": round(random.random(), 2),
-            "model_version": Predictor.MODEL_VERSION,
+            "confidence": results[0][1],
+            "time": round(end_time - start_time, 2),
+            "model_version": self.MODEL,
         }
