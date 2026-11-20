@@ -6,10 +6,12 @@
  * Displays the current page title based on the route and renders the corresponding page content.
  */
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import InfoIcon from "@mui/icons-material/Info";
 import PersonIcon from "@mui/icons-material/Person";
+import { IconButton, Tooltip } from "@mui/material";
 import Stack from "@mui/material/Stack";
-import { Account, PageContainer } from "@toolpad/core";
+import { PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
@@ -47,8 +49,17 @@ const NAVIGATION: Navigation = [
 function ToolbarActions() {
     return (
         <Stack direction="row" alignItems="center">
+            <Tooltip title="GitHub Repository" placement="bottom">
+                <IconButton
+                    aria-label="GitHub Repository"
+                    href="https://github.com/YianXie/TrayCycle"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <GitHubIcon />
+                </IconButton>
+            </Tooltip>
             <ColorModeSwitcher />
-            <Account />
         </Stack>
     );
 }
