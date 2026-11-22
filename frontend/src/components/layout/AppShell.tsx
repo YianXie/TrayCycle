@@ -6,9 +6,12 @@
  * Displays the current page title based on the route and renders the corresponding page content.
  */
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import InfoIcon from "@mui/icons-material/Info";
 import PersonIcon from "@mui/icons-material/Person";
+import { IconButton, Tooltip } from "@mui/material";
 import Stack from "@mui/material/Stack";
-import { Account, PageContainer } from "@toolpad/core";
+import { PageContainer } from "@toolpad/core";
 import type { Navigation } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
@@ -26,9 +29,14 @@ const NAVIGATION: Navigation = [
         title: "Main Items",
     },
     {
-        segment: "dashboard",
-        title: "Dashboard",
+        segment: "overview",
+        title: "Overview",
         icon: <DashboardIcon />,
+    },
+    {
+        segment: "per-dish",
+        title: "Per-dish Breakdown",
+        icon: <InfoIcon />,
     },
     {
         segment: "about-us",
@@ -41,8 +49,17 @@ const NAVIGATION: Navigation = [
 function ToolbarActions() {
     return (
         <Stack direction="row" alignItems="center">
+            <Tooltip title="GitHub Repository" placement="bottom">
+                <IconButton
+                    aria-label="GitHub Repository"
+                    href="https://github.com/YianXie/TrayCycle"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <GitHubIcon />
+                </IconButton>
+            </Tooltip>
             <ColorModeSwitcher />
-            <Account />
         </Stack>
     );
 }
@@ -51,7 +68,8 @@ function ToolbarActions() {
 export default function Home() {
     const { pathname } = useLocation();
     const pages: Record<string, string> = {
-        "/dashboard": "Dashboard",
+        "/overview": "Overview",
+        "/per-dish": "Per-dish Breakdown",
         "/about-us": "About Us",
         "/": "Home",
     };
@@ -76,6 +94,7 @@ export default function Home() {
             <DashboardLayout slots={{ toolbarActions: ToolbarActions }}>
                 <PageContainer
                     title={title}
+                    breadcrumbs={[]}
                     sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}
                 >
                     <Outlet />
