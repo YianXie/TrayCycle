@@ -77,23 +77,6 @@ const describeError = (error: unknown): string => {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-function BooButton() {
-    const [booed, setBooed] = useState(false);
-
-    return (
-        <Button
-            variant={booed ? "contained" : "outlined"}
-            color={booed ? "error" : "inherit"}
-            onClick={() => setBooed(!booed)}
-            startIcon={booed ? "🍅" : "👎"}
-            size="small"
-            sx={{ borderRadius: 20, textTransform: "none" }}
-        >
-            {booed ? "Booed!" : "Boo"}
-        </Button>
-    );
-}
-
 export default function Dashboard() {
     const [searchParams, setSearchParams] = useSearchParams();
     const key = searchParams.toString();
@@ -242,7 +225,6 @@ function StatsContent({ stats }: { stats: Stats }) {
                                         value={kg(dish.total_waste_kg)}
                                         label={dish.dish_name}
                                         hint={`${plural(dish.bowl_count, "bowl")} · avg ${Math.round(dish.average_waste_percent)}% level`}
-                                        action={<BooButton />}
                                     />
                                 </Grid>
                             ))}
