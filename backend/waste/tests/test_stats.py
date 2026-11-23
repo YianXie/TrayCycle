@@ -20,7 +20,8 @@ class StatsAPITests(WasteAPITestCase):
                 capture=Capture.objects.create(image=make_image()),
                 dish=self.dish,
                 waste_bucket=WasteBucketChoices.HALF,
-                confidence=0.9,
+                confidence={"dish_name": 0.9, "waste_bucket": 0.9},
+                time_taken=1.0,
                 model_version="test",
             )
         self.login_admin()
@@ -59,7 +60,8 @@ class StatsAPITests(WasteAPITestCase):
                 ),
                 dish=dish,
                 waste_bucket=bucket,
-                confidence=0.9,
+                confidence={"dish_name": 0.9, "waste_bucket": 0.9},
+                time_taken=1.0,
                 model_version="test",
             )
         self.login_admin()
@@ -93,7 +95,8 @@ class StatsAPITests(WasteAPITestCase):
                 capture=capture,
                 dish=self.dish,
                 waste_bucket=bucket,
-                confidence=0.9,
+                confidence={"dish_name": 0.9, "waste_bucket": 0.9},
+                time_taken=1.0,
                 model_version="test",
             )
         self.login_admin()
@@ -110,7 +113,8 @@ class StatsAPITests(WasteAPITestCase):
             capture=capture,
             dish=self.dish,
             waste_bucket=WasteBucketChoices.HALF,
-            confidence=0.9,
+            confidence={"dish_name": 0.9, "waste_bucket": 0.9},
+            time_taken=1.0,
             model_version="test",
         )
         Label.objects.create(

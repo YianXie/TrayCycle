@@ -58,7 +58,8 @@ class WorkerTest(WasteAPITestCase):
             "capture": capture.pk,
             "dish": self.dish.pk,
             "waste_bucket": 25,
-            "confidence": 0.9,
+            "confidence": {"dish_name": 0.9, "waste_bucket": 0.9},
+            "time_taken": 1.0,
             "model_version": "v1.0",
         }
 
@@ -84,11 +85,12 @@ class WorkerTest(WasteAPITestCase):
             "capture": capture.pk,
             "dish": self.dish.pk,
             "waste_bucket": 25,
-            "confidence": 0.9,
+            "confidence": {"dish_name": 0.9, "waste_bucket": 0.9},
+            "time_taken": 1.0,
             "model_version": "v1.0",
         }
         prediction_response = self.client.post(
-            reverse("prediction-list"), prediction_data
+            reverse("prediction-list"), prediction_data, format="json"
         )
 
         # Check that the prediction was created successfully and the capture is now marked as done
@@ -140,11 +142,12 @@ class WorkerTest(WasteAPITestCase):
             "capture": capture.pk,
             "dish": self.dish.pk,
             "waste_bucket": 25,
-            "confidence": 0.9,
+            "confidence": {"dish_name": 0.9, "waste_bucket": 0.9},
+            "time_taken": 1.0,
             "model_version": "v1.0",
         }
         prediction_response = self.client.post(
-            reverse("prediction-list"), prediction_data
+            reverse("prediction-list"), prediction_data, format="json"
         )
 
         # Check that the prediction creation failed with a 409 Conflict
@@ -191,11 +194,12 @@ class WorkerTest(WasteAPITestCase):
             "capture": capture.pk,
             "dish": self.dish.pk,
             "waste_bucket": 25,
-            "confidence": 0.9,
+            "confidence": {"dish_name": 0.9, "waste_bucket": 0.9},
+            "time_taken": 1.0,
             "model_version": "v1.0",
         }
         first_prediction_response = self.client.post(
-            reverse("prediction-list"), prediction_data
+            reverse("prediction-list"), prediction_data, format="json"
         )
 
         # Check that the first prediction was created successfully
@@ -203,7 +207,7 @@ class WorkerTest(WasteAPITestCase):
 
         # Attempt to create a second prediction for the same capture
         second_prediction_response = self.client.post(
-            reverse("prediction-list"), prediction_data
+            reverse("prediction-list"), prediction_data, format="json"
         )
 
         # Check that the second prediction creation failed with a 409 Conflict
@@ -280,7 +284,7 @@ class WorkerTest(WasteAPITestCase):
 
         self.login_other_worker()
         prediction_response = self.client.post(
-            reverse("prediction-list"), self.prediction_data(capture)
+            reverse("prediction-list"), self.prediction_data(capture), format="json"
         )
 
         # Check that the response is 409 Conflict, no prediction was saved and the capture is untouched
@@ -301,14 +305,14 @@ class WorkerTest(WasteAPITestCase):
         # The first worker posts its late prediction
         self.login_worker()
         late_response = self.client.post(
-            reverse("prediction-list"), self.prediction_data(capture)
+            reverse("prediction-list"), self.prediction_data(capture), format="json"
         )
         self.assertEqual(late_response.status_code, status.HTTP_409_CONFLICT)  # pyright: ignore[reportAttributeAccessIssue]
 
         # The worker that holds the claim can still complete it
         self.login_other_worker()
         current_response = self.client.post(
-            reverse("prediction-list"), self.prediction_data(capture)
+            reverse("prediction-list"), self.prediction_data(capture), format="json"
         )
         self.assertEqual(current_response.status_code, status.HTTP_201_CREATED)  # pyright: ignore[reportAttributeAccessIssue]
         self.assertEqual(Prediction.objects.filter(capture=capture).count(), 1)
@@ -319,7 +323,7 @@ class WorkerTest(WasteAPITestCase):
 
         self.login_admin()
         prediction_response = self.client.post(
-            reverse("prediction-list"), self.prediction_data(capture)
+            reverse("prediction-list"), self.prediction_data(capture), format="json"
         )
 
         self.assertEqual(prediction_response.status_code, status.HTTP_201_CREATED)  # pyright: ignore[reportAttributeAccessIssue]

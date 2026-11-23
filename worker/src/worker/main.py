@@ -104,7 +104,7 @@ class Worker:
                         image.load()
                         try:
                             prediction = predictor.predict(image, dishes)
-                            print(
+                            logger.info(
                                 f"Prediction for capture {capture['id']}: {prediction}"
                             )
                         except ModelException as e:
@@ -129,6 +129,7 @@ class Worker:
                                     "dish": prediction["dish"],
                                     "waste_bucket": prediction["waste_bucket"],
                                     "confidence": prediction["confidence"],
+                                    "time_taken": prediction["time_taken"],
                                     "model_version": prediction["model_version"],
                                 },
                             )
