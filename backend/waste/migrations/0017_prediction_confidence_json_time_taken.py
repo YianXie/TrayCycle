@@ -3,6 +3,29 @@
 from django.db import migrations, models
 
 
+def float_to_json(apps, schema_editor):
+    """Copy the legacy float confidence into both keys of the new JSON confidence."""
+    Prediction = apps.get_model("waste", "Prediction")
+    for prediction in Prediction.objects.only("pk", "confidence").iterator():
+        prediction.confidence_json = {
+            "dish_name": prediction.confidence,
+            "waste_bucket": prediction.confidence,
+        }
+        prediction.save(update_fields=["confidence_json"])
+
+
+def json_to_float(apps, schema_editor):
+    """Collapse the JSON confidence back to a single float (the minimum score)."""
+    Prediction = apps.get_model("waste", "Prediction")
+    for prediction in Prediction.objects.only("pk", "confidence_json").iterator():
+        values = [
+            v for v in (prediction.confidence_json or {}).values()
+            if isinstance(v, (int, float))
+        ]
+        prediction.confidence = min(values) if values else 0.0
+        prediction.save(update_fields=["confidence"])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -20,9 +43,21 @@ class Migration(migrations.Migration):
             field=models.FloatField(default=0),
             preserve_default=False,
         ),
-        migrations.AlterField(
+        # Postgres can't cast double precision -> jsonb directly, so instead of
+        # AlterField we add a new column, copy the data, and swap it in.
+        migrations.AddField(
+            model_name='prediction',
+            name='confidence_json',
+            field=models.JSONField(default=dict),
+        ),
+        migrations.RunPython(float_to_json, json_to_float),
+        migrations.RemoveField(
             model_name='prediction',
             name='confidence',
-            field=models.JSONField(default=dict),
+        ),
+        migrations.RenameField(
+            model_name='prediction',
+            old_name='confidence_json',
+            new_name='confidence',
         ),
     ]
