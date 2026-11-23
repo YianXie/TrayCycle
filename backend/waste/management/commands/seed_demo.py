@@ -1,12 +1,12 @@
-from io import BytesIO
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.core.management.color import no_style
 from django.db import connection, transaction
-from PIL import Image
 
 from accounts.models import User
 from waste.constants import WORKER_GROUP_NAME, SourceChoices, StatusChoices
@@ -20,6 +20,8 @@ from waste.models import (
     Prediction,
     Station,
 )
+
+DEMO_IMAGES_DIR = Path(__file__).resolve().parent / "demo_images"
 
 
 class Command(BaseCommand):
@@ -39,8 +41,8 @@ class Command(BaseCommand):
             help="Force the creation of demo data even if it already exists. Replace existing data.",
         )
 
-    def make_image(self, name: str = "bowl.png") -> SimpleUploadedFile:
-        """Build a tiny valid PNG so ImageField validation passes.
+    def load_image(self, filename: str) -> SimpleUploadedFile:
+        """Build a tiny valid jpg so ImageField validation passes.
 
         Args:
             name (str): file name for the upload.
@@ -48,9 +50,10 @@ class Command(BaseCommand):
         Returns:
             SimpleUploadedFile: an in-memory image file.
         """
-        buf = BytesIO()
-        Image.new("RGB", (10, 10), "white").save(buf, format="PNG")
-        return SimpleUploadedFile(name, buf.getvalue(), content_type="image/png")
+        path = DEMO_IMAGES_DIR / filename
+        if not path.is_file():
+            raise CommandError(f"Demo image not found: {path}")
+        return ContentFile(path.read_bytes(), name=path.name)  # pyright: ignore[reportReturnType]
 
     def handle(self, *args, **options) -> None:
         # Read the --force option from the command-line arguments
@@ -83,6 +86,9 @@ class Command(BaseCommand):
                     Label.objects.all().delete()
                     OverproductionLog.objects.all().delete()
                     Prediction.objects.all().delete()
+                    for c in Capture.objects.all():
+                        if c.image:
+                            c.image.delete(save=False)
                     Capture.objects.all().delete()
                     MenuDay.objects.all().delete()
                     Device.objects.all().delete()
@@ -237,7 +243,7 @@ class Command(BaseCommand):
         # Captures have no natural unique field, so they are keyed by a reference name for predictions
         captures = {
             "capture1": {
-                "image": self.make_image("capture1.png"),
+                "image": self.load_image("capture1.jpg"),
                 "captured_at": "2025-12-01T12:00:00Z",
                 "device": "Cam 1",
                 "uploaded_by": None,
@@ -248,7 +254,7 @@ class Command(BaseCommand):
                 "status": StatusChoices.DONE,
             },
             "capture2": {
-                "image": self.make_image("capture2.png"),
+                "image": self.load_image("capture2.jpg"),
                 "captured_at": "2025-12-02T11:29:43Z",
                 "device": "Cam 2",
                 "uploaded_by": None,
@@ -259,7 +265,7 @@ class Command(BaseCommand):
                 "status": StatusChoices.DONE,
             },
             "capture3": {
-                "image": self.make_image("capture3.png"),
+                "image": self.load_image("capture3.jpg"),
                 "captured_at": "2025-12-03T11:42:03Z",
                 "device": None,
                 "uploaded_by": "Admin 1",
@@ -270,7 +276,7 @@ class Command(BaseCommand):
                 "status": StatusChoices.DONE,
             },
             "capture4": {
-                "image": self.make_image("capture4.png"),
+                "image": self.load_image("capture4.jpg"),
                 "captured_at": "2025-12-04T12:01:59Z",
                 "device": None,
                 "uploaded_by": "Admin 2",
@@ -281,7 +287,7 @@ class Command(BaseCommand):
                 "status": StatusChoices.FAILED,
             },
             "capture5": {
-                "image": self.make_image("capture5.png"),
+                "image": self.load_image("capture5.jpg"),
                 "captured_at": "2025-12-05T12:03:22Z",
                 "device": None,
                 "uploaded_by": "Admin 1",
