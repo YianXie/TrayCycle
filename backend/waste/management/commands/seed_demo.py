@@ -1,17 +1,17 @@
+import random
+from datetime import datetime, time, timedelta
+from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile  # noqa: F401
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.core.management.color import no_style
 from django.db import connection, transaction
-from PIL import Image
-
-import random
-from datetime import datetime, time, timedelta
 from django.utils import timezone
+from PIL import Image
 
 from accounts.models import User
 from waste.constants import WORKER_GROUP_NAME, SourceChoices, StatusChoices
@@ -64,8 +64,8 @@ class Command(BaseCommand):
             help="Random seed so runs are reproducible.",
         )
 
-    def load_image(self, filename: str) -> SimpleUploadedFile:
-        """Build a tiny valid jpg so ImageField validation passes.
+    def make_image(self, name: str = "bowl.png") -> SimpleUploadedFile:
+        """Build a tiny valid PNG so ImageField validation passes.
 
         Args:
             name (str): file name for the upload.
@@ -73,10 +73,23 @@ class Command(BaseCommand):
         Returns:
             SimpleUploadedFile: an in-memory image file.
         """
-        path = DEMO_IMAGES_DIR / filename
-        if not path.is_file():
-            raise CommandError(f"Demo image not found: {path}")
-        return ContentFile(path.read_bytes(), name=path.name)  # pyright: ignore[reportReturnType]
+        buf = BytesIO()
+        Image.new("RGB", (10, 10), "white").save(buf, format="PNG")
+        return SimpleUploadedFile(name, buf.getvalue(), content_type="image/png")
+
+    # def load_image(self, filename: str) -> SimpleUploadedFile:
+    #     """Build a tiny valid jpg so ImageField validation passes.
+
+    #     Args:
+    #         name (str): file name for the upload.
+
+    #     Returns:
+    #         SimpleUploadedFile: an in-memory image file.
+    #     """
+    #     path = DEMO_IMAGES_DIR / filename
+    #     if not path.is_file():
+    #         raise CommandError(f"Demo image not found: {path}")
+    #     return ContentFile(path.read_bytes(), name=path.name)  # pyright: ignore[reportReturnType]
 
     # Create demo data for the application, replacing existing data if --force is specified.
     BUCKETS = (0, 25, 50, 75, 100)
@@ -95,7 +108,6 @@ class Command(BaseCommand):
             served = rng.sample(dish_names, k=rng.choice([3, 4, 4, 5]))
             menu_days.append({"date": date, "dishes": served})
 
-            # 0 at the oldest day -> 1 at today: fewer full bowls wasted over time.
             progress = offset / max(days - 1, 1)
             weights = [2 + 5 * progress, 5, 4, 2, 1]
 
@@ -133,14 +145,18 @@ class Command(BaseCommand):
                 }
 
                 if failed:
-                    continue  # a failed capture has no prediction, so it stays out of stats
+                    continue
 
                 predictions.append(
                     {
                         "capture": key,
                         "dish": dish,
                         "waste_bucket": bucket,
-                        "confidence": round(rng.uniform(0.35, 0.99), 2),
+                        "confidence": {
+                            "dish_name": round(rng.uniform(0.35, 0.99), 2),
+                            "waste_bucket": round(rng.uniform(0.35, 0.99), 2),
+                        },
+                        "time_taken": rng.random() * 2.0,
                         "model_version": "1.0",
                     }
                 )
@@ -150,9 +166,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options) -> None:
         # Read the --force option from the command-line arguments
         force = options["force"]
-        days = options["days"]
-        captures_per_day = options["captures_per_day"]
-        seed = options["seed"]
+        options["days"]
+        options["captures_per_day"]
+        options["seed"]
 
         # Check if any of the relevant models already have data in the database
         if (
