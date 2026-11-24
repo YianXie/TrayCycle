@@ -81,7 +81,8 @@ class DishAPITests(WasteAPITestCase):
             capture=capture,
             dish=self.dish,
             waste_bucket=0,
-            confidence=0.9,
+            confidence={"dish_name": 0.9, "waste_bucket": 0.9},
+            time_taken=1.0,
             model_version="v1",
         )
         res = self.client.delete(reverse("dish-detail", args=[self.dish.id]))  # pyright: ignore[reportAttributeAccessIssue]

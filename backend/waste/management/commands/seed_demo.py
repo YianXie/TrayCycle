@@ -1,7 +1,8 @@
-from io import BytesIO
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.core.management.color import no_style
@@ -24,6 +25,8 @@ from waste.models import (
     Prediction,
     Station,
 )
+
+DEMO_IMAGES_DIR = Path(__file__).resolve().parent / "demo_images"
 
 
 class Command(BaseCommand):
@@ -61,8 +64,8 @@ class Command(BaseCommand):
             help="Random seed so runs are reproducible.",
         )
 
-    def make_image(self, name: str = "bowl.png") -> SimpleUploadedFile:
-        """Build a tiny valid PNG so ImageField validation passes.
+    def load_image(self, filename: str) -> SimpleUploadedFile:
+        """Build a tiny valid jpg so ImageField validation passes.
 
         Args:
             name (str): file name for the upload.
@@ -70,9 +73,10 @@ class Command(BaseCommand):
         Returns:
             SimpleUploadedFile: an in-memory image file.
         """
-        buf = BytesIO()
-        Image.new("RGB", (10, 10), "white").save(buf, format="PNG")
-        return SimpleUploadedFile(name, buf.getvalue(), content_type="image/png")
+        path = DEMO_IMAGES_DIR / filename
+        if not path.is_file():
+            raise CommandError(f"Demo image not found: {path}")
+        return ContentFile(path.read_bytes(), name=path.name)  # pyright: ignore[reportReturnType]
 
     # Create demo data for the application, replacing existing data if --force is specified.
     BUCKETS = (0, 25, 50, 75, 100)
@@ -177,6 +181,9 @@ class Command(BaseCommand):
                     Label.objects.all().delete()
                     OverproductionLog.objects.all().delete()
                     Prediction.objects.all().delete()
+                    for c in Capture.objects.all():
+                        if c.image:
+                            c.image.delete(save=False)
                     Capture.objects.all().delete()
                     MenuDay.objects.all().delete()
                     Device.objects.all().delete()

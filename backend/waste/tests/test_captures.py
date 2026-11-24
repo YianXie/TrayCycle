@@ -54,14 +54,16 @@ class CaptureAPITests(WasteAPITestCase):
             capture=capture,
             dish=self.dish,
             waste_bucket=25,
-            confidence=0.9,
+            confidence={"dish_name": 0.9, "waste_bucket": 0.9},
+            time_taken=1.0,
             model_version="v1",
         )
         Prediction.objects.create(
             capture=capture,
             dish=self.dish,
             waste_bucket=50,
-            confidence=0.8,
+            confidence={"dish_name": 0.8, "waste_bucket": 0.8},
+            time_taken=1.0,
             model_version="v1",
         )
         # Filter captures by the dish of the predictions
@@ -86,7 +88,8 @@ class CaptureAPITests(WasteAPITestCase):
             capture=capture,
             dish=self.dish,
             waste_bucket=25,
-            confidence=confidence,
+            confidence={"dish_name": confidence, "waste_bucket": confidence},
+            time_taken=1.0,
             model_version="v1",
         )
 

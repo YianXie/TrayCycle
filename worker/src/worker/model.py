@@ -1,4 +1,3 @@
-import random
 import time
 from typing import TypedDict
 
@@ -14,8 +13,8 @@ class PredictionResult(TypedDict):
 
     dish: int
     waste_bucket: int
-    confidence: float
-    time: float
+    confidence: dict[str, float]
+    time_taken: float
     model_version: str
 
 
@@ -49,10 +48,9 @@ class Predictor:
         processor = CLIPProcessor.from_pretrained(self.MODEL)
         model.eval()
 
-        labels = [dish["name"] for dish in dishes]
-
+        dish_name_labels = [dish["name"] for dish in dishes]
         inputs = processor(
-            text=[f"A picture of {label}" for label in labels],
+            text=[f"A picture of {label}" for label in dish_name_labels],
             images=image,
             return_tensors="pt",  # pyright: ignore[reportCallIssue]
             padding=True,  # pyright: ignore[reportCallIssue]
@@ -62,18 +60,41 @@ class Predictor:
             outputs = model(**inputs)
 
         probabilities = outputs.logits_per_image.softmax(dim=1)[0]
-        results = sorted(
-            zip(labels, probabilities.tolist()), key=lambda x: x[1], reverse=True
+        dish_name_results = sorted(
+            zip(dish_name_labels, probabilities.tolist()),
+            key=lambda x: x[1],
+            reverse=True,
+        )
+
+        waste_bucket_labels = [0, 25, 50, 75, 100]
+        inputs = processor(
+            text=[f"{label}% food remaining" for label in waste_bucket_labels],
+            images=image,
+            return_tensors="pt",  # pyright: ignore[reportCallIssue]
+            padding=True,  # pyright: ignore[reportCallIssue]
+        )
+
+        with torch.no_grad():
+            outputs = model(**inputs)
+
+        probabilities = outputs.logits_per_image.softmax(dim=1)[0]
+        waste_bucket_results = sorted(
+            zip(waste_bucket_labels, probabilities.tolist()),
+            key=lambda x: x[1],
+            reverse=True,
         )
 
         end_time = time.time()
 
         return {
             "dish": next(
-                dish["id"] for dish in dishes if dish["name"] == results[0][0]
+                dish["id"] for dish in dishes if dish["name"] == dish_name_results[0][0]
             ),
-            "waste_bucket": random.choice((0, 25, 50, 75, 100)),
-            "confidence": results[0][1],
-            "time": round(end_time - start_time, 2),
+            "waste_bucket": waste_bucket_results[0][0],
+            "confidence": {
+                "dish_name": dish_name_results[0][1],
+                "waste_bucket": waste_bucket_results[0][1],
+            },
+            "time_taken": round(end_time - start_time, 2),
             "model_version": self.MODEL,
         }

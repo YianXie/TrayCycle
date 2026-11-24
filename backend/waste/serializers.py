@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import JSONField, ModelSerializer
 
 from .models import (
     Capture,
@@ -54,6 +54,7 @@ class DeviceSerializer(ModelSerializer):
 class PredictionSummarySerializer(ModelSerializer):
     dish = PrimaryKeyRelatedField(queryset=Dish.objects.all())
     dish_detail = DishSerializer(source="dish", read_only=True)
+    confidence = JSONField(default=dict)
 
     class Meta:
         model = Prediction
@@ -63,9 +64,31 @@ class PredictionSummarySerializer(ModelSerializer):
             "dish_detail",
             "waste_bucket",
             "confidence",
+            "time_taken",
             "model_version",
             "created_at",
         ]
+
+    def validate_confidence(self, value):
+        """Validate that the confidence values are between 0 and 1.
+
+        Args:
+            value (dict): The confidence values to validate.
+
+        Raises:
+            serializers.ValidationError: If any confidence value is not between 0 and 1.
+
+        Returns:
+            dict: The validated confidence values.
+        """
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Confidence must be a dictionary.")
+        for key, val in value.items():
+            if not isinstance(val, (int, float)) or not (0 <= val <= 1):
+                raise serializers.ValidationError(
+                    f"Confidence value for '{key}' must be between 0 and 1."
+                )
+        return value
 
 
 class CaptureSerializer(ModelSerializer):
@@ -103,14 +126,11 @@ class CaptureSerializer(ModelSerializer):
         ]
 
 
-class PredictionSerializer(ModelSerializer):
+class PredictionSerializer(PredictionSummarySerializer):
     capture = PrimaryKeyRelatedField(queryset=Capture.objects.all())
     capture_detail = CaptureSerializer(source="capture", read_only=True)
-    dish = PrimaryKeyRelatedField(queryset=Dish.objects.all())
-    dish_detail = DishSerializer(source="dish", read_only=True)
 
-    class Meta:
-        model = Prediction
+    class Meta(PredictionSummarySerializer.Meta):
         fields = ["capture", "capture_detail", *PredictionSummarySerializer.Meta.fields]  # noqa: RUF012
 
 

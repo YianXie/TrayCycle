@@ -1,6 +1,5 @@
 import secrets
 
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -142,7 +141,8 @@ class Prediction(models.Model):
         capture (ForeignKey): A foreign key to the Capture model.
         dish (ForeignKey): A foreign key to the Dish model.
         waste_bucket (IntegerField): A integer indicating the percentage of waste in the bowl (0, 25, 50, 75, 100).
-        confidence (FloatField): A float indicating the confidence of the prediction.
+        confidence (JSONField): A JSON field containing the confidence values for the dish name and waste bucket predictions, with values between 0 and 1.
+        time_taken (FloatField): A float indicating the time taken for the prediction in seconds.
         created_at (DateTimeField): The timestamp of when the prediction was created.
         model_version (CharField): A string indicating the version of the model used for the prediction
     """
@@ -152,18 +152,13 @@ class Prediction(models.Model):
     )
     dish = models.ForeignKey(Dish, on_delete=models.PROTECT, related_name="predictions")
     waste_bucket = models.IntegerField(choices=WasteBucketChoices)
-    confidence = models.FloatField(
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
-    )
+    confidence = models.JSONField(default=dict)
+    time_taken = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
     model_version = models.CharField(max_length=100)
 
     class Meta:
         constraints = [  # noqa: RUF012
-            models.CheckConstraint(
-                condition=models.Q(confidence__gte=0) & models.Q(confidence__lte=1),
-                name="prediction_confidence_0_1",
-            ),
             models.CheckConstraint(
                 condition=models.Q(waste_bucket__in=WasteBucketChoices.values),
                 name="prediction_valid_bucket",
