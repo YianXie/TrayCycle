@@ -240,7 +240,7 @@ A Python process that automatically claim pending captures and fetch that day's 
 
 ### Raspberry Pi 5
 
-WIP
+A Raspberry Pi 5 equipped with a camera takes the picture of the dishes from a top down view. Using a smaller neural netwrok it finds out whether the current frame has a dish and if it does sends it to the server where the worker processes it.
 
 ### Database & Media Storage
 
