@@ -1,12 +1,17 @@
+import random
+from datetime import datetime, time, timedelta
+from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile  # noqa: F401
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.core.management.color import no_style
 from django.db import connection, transaction
+from django.utils import timezone
+from PIL import Image
 
 from accounts.models import User
 from waste.constants import WORKER_GROUP_NAME, SourceChoices, StatusChoices
@@ -40,9 +45,27 @@ class Command(BaseCommand):
             action="store_true",
             help="Force the creation of demo data even if it already exists. Replace existing data.",
         )
+        parser.add_argument(
+            "--days",
+            type=int,
+            default=14,
+            help="Days of demo data, ending today.",
+        )
+        parser.add_argument(
+            "--captures-per-day",
+            type=int,
+            default=12,
+            help="Captures to create per day.",
+        )
+        parser.add_argument(
+            "--seed",
+            type=int,
+            default=2026,
+            help="Random seed so runs are reproducible.",
+        )
 
-    def load_image(self, filename: str) -> SimpleUploadedFile:
-        """Build a tiny valid jpg so ImageField validation passes.
+    def make_image(self, name: str = "bowl.png") -> SimpleUploadedFile:
+        """Build a tiny valid PNG so ImageField validation passes.
 
         Args:
             name (str): file name for the upload.
@@ -50,14 +73,102 @@ class Command(BaseCommand):
         Returns:
             SimpleUploadedFile: an in-memory image file.
         """
-        path = DEMO_IMAGES_DIR / filename
-        if not path.is_file():
-            raise CommandError(f"Demo image not found: {path}")
-        return ContentFile(path.read_bytes(), name=path.name)  # pyright: ignore[reportReturnType]
+        buf = BytesIO()
+        Image.new("RGB", (10, 10), "white").save(buf, format="PNG")
+        return SimpleUploadedFile(name, buf.getvalue(), content_type="image/png")
+
+    # def load_image(self, filename: str) -> SimpleUploadedFile:
+    #     """Build a tiny valid jpg so ImageField validation passes.
+
+    #     Args:
+    #         name (str): file name for the upload.
+
+    #     Returns:
+    #         SimpleUploadedFile: an in-memory image file.
+    #     """
+    #     path = DEMO_IMAGES_DIR / filename
+    #     if not path.is_file():
+    #         raise CommandError(f"Demo image not found: {path}")
+    #     return ContentFile(path.read_bytes(), name=path.name)  # pyright: ignore[reportReturnType]
+
+    # Create demo data for the application, replacing existing data if --force is specified.
+    BUCKETS = (0, 25, 50, 75, 100)
+
+    def build_schedule(self, days: int, per_day: int, dish_names: list[str]):
+        """Generate menu days, captures, predictions and labels for days ending today."""
+        rng = random.Random(self.seed)
+        today = timezone.localdate()
+        menu_days: list[dict] = []
+        captures: dict[str, dict] = {}
+        predictions: list[dict] = []
+        labels: list[dict] = []
+
+        for offset in range(days):
+            date = today - timedelta(days=days - 1 - offset)
+            served = rng.sample(dish_names, k=rng.choice([3, 4, 4, 5]))
+            menu_days.append({"date": date, "dishes": served})
+
+            progress = offset / max(days - 1, 1)
+            weights = [2 + 5 * progress, 5, 4, 2, 1]
+
+            for index in range(per_day):
+                key = f"capture{date:%Y%m%d}-{index + 1}"
+                dish = rng.choice(served)
+                bucket = rng.choices(self.BUCKETS, weights=weights)[0]
+                captured_at = timezone.make_aware(
+                    datetime.combine(
+                        date,
+                        time(
+                            hour=rng.choice([11, 12, 12, 13]),
+                            minute=rng.randrange(60),
+                        ),
+                    )
+                )
+                failed = rng.random() < 0.02
+                uploaded = rng.random() < 0.3
+
+                captures[key] = {
+                    "image": self.make_image(f"{key}.png"),
+                    "captured_at": captured_at,
+                    "device": None if uploaded else rng.choice(["Cam 1", "Cam 2"]),
+                    "uploaded_by": "Admin 1" if uploaded else None,
+                    "claimed_at": captured_at
+                    + timedelta(seconds=rng.randrange(5, 120)),
+                    "claimed_by": rng.choice(
+                        ["inference-worker-1", "inference-worker-2"]
+                    ),
+                    "attempts": 3 if failed else 1,
+                    "source": SourceChoices.UPLOAD
+                    if uploaded
+                    else SourceChoices.CAMERA,
+                    "status": StatusChoices.FAILED if failed else StatusChoices.DONE,
+                }
+
+                if failed:
+                    continue
+
+                predictions.append(
+                    {
+                        "capture": key,
+                        "dish": dish,
+                        "waste_bucket": bucket,
+                        "confidence": {
+                            "dish_name": round(rng.uniform(0.35, 0.99), 2),
+                            "waste_bucket": round(rng.uniform(0.35, 0.99), 2),
+                        },
+                        "time_taken": rng.random() * 2.0,
+                        "model_version": "1.0",
+                    }
+                )
+
+        return menu_days, captures, predictions, labels
 
     def handle(self, *args, **options) -> None:
         # Read the --force option from the command-line arguments
         force = options["force"]
+        options["days"]
+        options["captures_per_day"]
+        options["seed"]
 
         # Check if any of the relevant models already have data in the database
         if (
@@ -188,48 +299,6 @@ class Command(BaseCommand):
                 "portion": 400,
             },
         ]
-        menu_days = [
-            {
-                "date": "2025-12-01",
-                "dishes": [
-                    "Chicken Teriyaki",
-                    "Caesar Salad",
-                    "Hainanese Chicken Rice",
-                ],
-            },
-            {
-                "date": "2025-12-02",
-                "dishes": [
-                    "Beef Bulgogi",
-                    "Greek Salad",
-                    "Hainanese Chicken Rice",
-                ],
-            },
-            {
-                "date": "2025-12-03",
-                "dishes": [
-                    "Sweet and sour pork",
-                    "Caesar Salad",
-                    "Hainanese Chicken Rice",
-                ],
-            },
-            {
-                "date": "2025-12-04",
-                "dishes": [
-                    "Chicken Teriyaki",
-                    "Greek Salad",
-                    "Hainanese Chicken Rice",
-                ],
-            },
-            {
-                "date": "2025-12-05",
-                "dishes": [
-                    "Beef Bulgogi",
-                    "Caesar Salad",
-                    "Hainanese Chicken Rice",
-                ],
-            },
-        ]
         devices = [
             {
                 "name": "Cam 1",
@@ -240,106 +309,12 @@ class Command(BaseCommand):
                 "location": "Cafe B",
             },
         ]
-        # Captures have no natural unique field, so they are keyed by a reference name for predictions
-        captures = {
-            "capture1": {
-                "image": self.load_image("capture1.jpg"),
-                "captured_at": "2025-12-01T12:00:00Z",
-                "device": "Cam 1",
-                "uploaded_by": None,
-                "claimed_at": "2025-12-01T12:01:00Z",
-                "claimed_by": "inference-worker-1",
-                "attempts": 1,
-                "source": SourceChoices.CAMERA,
-                "status": StatusChoices.DONE,
-            },
-            "capture2": {
-                "image": self.load_image("capture2.jpg"),
-                "captured_at": "2025-12-02T11:29:43Z",
-                "device": "Cam 2",
-                "uploaded_by": None,
-                "claimed_at": "2025-12-02T11:29:47Z",
-                "claimed_by": "inference-worker-2",
-                "attempts": 2,
-                "source": SourceChoices.CAMERA,
-                "status": StatusChoices.DONE,
-            },
-            "capture3": {
-                "image": self.load_image("capture3.jpg"),
-                "captured_at": "2025-12-03T11:42:03Z",
-                "device": None,
-                "uploaded_by": "Admin 1",
-                "claimed_at": "2025-12-03T11:44:02Z",
-                "claimed_by": "inference-worker-1",
-                "attempts": 1,
-                "source": SourceChoices.UPLOAD,
-                "status": StatusChoices.DONE,
-            },
-            "capture4": {
-                "image": self.load_image("capture4.jpg"),
-                "captured_at": "2025-12-04T12:01:59Z",
-                "device": None,
-                "uploaded_by": "Admin 2",
-                "claimed_at": "2025-12-04T12:02:12Z",
-                "claimed_by": "inference-worker-1",
-                "attempts": 3,
-                "source": SourceChoices.UPLOAD,
-                "status": StatusChoices.FAILED,
-            },
-            "capture5": {
-                "image": self.load_image("capture5.jpg"),
-                "captured_at": "2025-12-05T12:03:22Z",
-                "device": None,
-                "uploaded_by": "Admin 1",
-                "claimed_at": "2025-12-05T12:03:24Z",
-                "claimed_by": "inference-worker-2",
-                "attempts": 1,
-                "source": SourceChoices.UPLOAD,
-                "status": StatusChoices.DONE,
-            },
-        }
-        predictions = [
-            {
-                "capture": "capture1",
-                "dish": "Chicken Teriyaki",
-                "waste_bucket": 25,
-                "confidence": {"dish_name": 0.85, "waste_bucket": 0.85},
-                "time_taken": 1.0,
-                "model_version": "1.0",
-            },
-            {
-                "capture": "capture2",
-                "dish": "Caesar Salad",
-                "waste_bucket": 0,
-                "confidence": {"dish_name": 0.7, "waste_bucket": 0.7},
-                "time_taken": 1.0,
-                "model_version": "1.0",
-            },
-            {
-                "capture": "capture3",
-                "dish": "Beef Bulgogi",
-                "waste_bucket": 75,
-                "confidence": {"dish_name": 0.35, "waste_bucket": 0.35},
-                "time_taken": 1.0,
-                "model_version": "1.0",
-            },
-            {
-                "capture": "capture4",
-                "dish": "Hainanese Chicken Rice",
-                "waste_bucket": 50,
-                "confidence": {"dish_name": 0.97, "waste_bucket": 0.97},
-                "time_taken": 1.0,
-                "model_version": "1.0",
-            },
-            {
-                "capture": "capture5",
-                "dish": "Sweet and sour pork",
-                "waste_bucket": 25,
-                "confidence": {"dish_name": 0.9, "waste_bucket": 0.9},
-                "time_taken": 1.0,
-                "model_version": "1.0",
-            },
-        ]
+        self.seed = options["seed"]
+        menu_days, captures, predictions, labels = self.build_schedule(
+            days=options["days"],
+            per_day=options["captures_per_day"],
+            dish_names=[dish["name"] for dish in dishes],
+        )
 
         # Create the objects in the database, letting the database assign primary keys.
         # Related objects are looked up by name from the objects created earlier.
@@ -394,6 +369,15 @@ class Command(BaseCommand):
                     **prediction_data,
                     "capture": capture_objs[prediction_data["capture"]],
                     "dish": dish_objs[prediction_data["dish"]],
+                }
+            )
+        for label_data in labels:
+            Label.objects.create(
+                **{
+                    **label_data,
+                    "capture": capture_objs[label_data["capture"]],
+                    "dish": dish_objs[label_data["dish"]],
+                    "labeler": user_objs[label_data["labeler"]],
                 }
             )
 
